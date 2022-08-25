@@ -10,7 +10,8 @@ describe('test session', () => {
   let testData;
 
   beforeAll(async () => {
-    app = fastify({ logger: { prettyPrint: true } });
+    // app = fastify({ logger: { prettyPrint: true } });
+    app = fastify({ logger: { transport: { target: 'pino-pretty' } } });
     await init(app);
     knex = app.objection.knex;
     await knex.migrate.latest();
