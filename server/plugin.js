@@ -3,7 +3,10 @@
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fastifyStatic from '@fastify/static';
-import fastifyErrorPage from 'fastify-error-page';
+
+// import fastifyErrorPage from 'fastify-error-page';
+import fp from 'fastify-plugin';
+import Youch from 'youch';
 
 import pointOfView from 'point-of-view';
 import fastifyFormbody from '@fastify/formbody';
@@ -79,7 +82,28 @@ const addHooks = (app) => {
 
 const registerPlugins = (app) => {
   app.register(fastifySensible);
-  app.register(fastifyErrorPage);
+  // app.register(fastifyErrorPage);
+  app.register(fp(
+    (fastify, options, next) => {
+      fastify.setErrorHandler((err, req, reply) => {
+        try {
+          const youch = new Youch(err, req.raw);
+          youch.toHTML().then((html) => {
+            reply.type('text/html');
+            reply.send(html);
+          });
+        } catch (error) {
+          reply.send(error);
+        }
+      });
+      next();
+    },
+    {
+      fastify: '^4.x.x',
+      name: 'fastify-error-page',
+    },
+  ));
+
   app.register(fastifyReverseRoutes);
   app.register(fastifyFormbody, { parser: qs.parse });
   app.register(fastifySecureSession, {
