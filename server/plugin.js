@@ -13,12 +13,13 @@ import fastifyFormbody from '@fastify/formbody';
 import fastifySecureSession from '@fastify/secure-session';
 import fastifyPassport from '@fastify/passport';
 import fastifySensible from '@fastify/sensible';
-import { plugin as fastifyReverseRoutes } from 'fastify-reverse-routes';
+// import { plugin as fastifyReverseRoutes } from 'fastify-reverse-routes';
 import fastifyMethodOverride from 'fastify-method-override';
 import fastifyObjectionjs from 'fastify-objectionjs';
 import qs from 'qs';
 import Pug from 'pug';
 import i18next from 'i18next';
+import fastifyReverseRoutes from './reverseRoutesFastifyPlugin.js';
 import ru from './locales/ru.js';
 // @ts-ignore
 
@@ -80,7 +81,7 @@ const addHooks = (app) => {
   });
 };
 
-const registerPlugins = (app) => {
+const registerPlugins = async (app) => {
   app.register(fastifySensible);
   // app.register(fastifyErrorPage);
   app.register(fp(
@@ -104,7 +105,7 @@ const registerPlugins = (app) => {
     },
   ));
 
-  app.register(fastifyReverseRoutes);
+  await app.register(fastifyReverseRoutes);
   app.register(fastifyFormbody, { parser: qs.parse });
   app.register(fastifySecureSession, {
     secret: process.env.SESSION_KEY,
@@ -139,7 +140,7 @@ const registerPlugins = (app) => {
 
 // eslint-disable-next-line no-unused-vars
 export default async (app, options) => {
-  registerPlugins(app);
+  await registerPlugins(app);
 
   await setupLocalization();
   setUpViews(app);

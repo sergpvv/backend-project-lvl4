@@ -14,8 +14,14 @@ describe('test users CRUD', () => {
   const testData = getTestData();
 
   beforeAll(async () => {
-    // app = fastify({ logger: { prettyPrint: true } });
-    app = fastify({ logger: { transport: { target: 'pino-pretty' } } });
+    app = fastify({
+      logger: {
+        transport: {
+          target: 'pino-pretty',
+          options: { colorize: true },
+        },
+      },
+    });
     await init(app);
     knex = app.objection.knex;
     models = app.objection.models;
