@@ -23,7 +23,7 @@ mixin input(entity, propertyName, errors = {})
       .invalid-feedback= propertyErrors.map(({ message }) => message).join('. ')
 
 mixin submit(form = null)
-  input(class='btn btn-primary' type='submit')&attributes(attributes)
+  input(class='btn btn-success' type='submit')&attributes(attributes)
 
 mixin buttonTo(action, method)
   form(action=action, method="post")
