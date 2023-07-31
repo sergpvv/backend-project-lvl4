@@ -1,12 +1,133 @@
 {
+  "links": {
+    "root": {
+      "name": "Менеджер задач",
+      "url": "http://localhost:3000/"
+    },
+    "users": {
+      "name": "Пользователи",
+      "url": "http://localhost:3000/users"
+    },
+    "statuses": {
+      "name": "Статусы",
+      "url": "http://localhost:3000/statuses"
+    },
+    "newStatus": {
+      "name": "Создать статус",
+      "url": "http://localhost:3000/statuses/new"
+    },
+    "labels": {
+      "name": "Метки",
+      "url": "http://localhost:3000/labels"
+    },
+    "newLabel": {
+      "name": "Создать метку",
+      "url": "http://localhost:3000/labels/new"
+    },
+    "tasks": {
+      "name": "Задачи",
+      "url": "http://localhost:3000/tasks"
+    },
+    "newTask": {
+      "name": "Создать задачу",
+      "url": "http://localhost:3000/tasks/new"
+    },
+    "signUp": {
+      "name": "Регистрация",
+      "url": "http://localhost:3000/users/new"
+    },
+    "signIn": {
+      "name": "Вход",
+      "url": "http://localhost:3000/session/new"
+    },
+    "edit": {
+      "name": "Изменить"
+    },
+    "session": {
+      "url": "http://localhost:3000/session"
+    }
+  },
+  "buttons": {
+    "save": {
+      "name": "Сохранить"
+    },
+    "edit": {
+      "name": "Изменить"
+    },
+    "delete": {
+      "name": "Удалить"
+    },
+    "signIn": {
+      "name": "Войти"
+    },
+    "signOut": {
+      "name": "Выход"
+    },
+    "create": {
+      "name": "Создать"
+    },
+    "show": {
+      "name": "Показать"
+    }
+  },
   "users": {
     "new": {
+      "firstName": "Malika",
+      "lastName": "Hodkiewicz",
+      "fullName": "Malika Hodkiewicz",
       "email": "malika_hodkiewicz75@live.com",
       "password": "RLJvaIgPOnX5r03"
     },
     "existing": {
+      "firstName": "Lawrence",
+      "lastName": "Kulas",
+      "fullName": "Lawrence Kulas",
       "email": "lawrence.kulas87@outlook.com",
-      "password": "O6AvLIQL1cbzrre"
+      "password": "XXs8HMdxYWdQj4m"
+    }
+  },
+  "taskStatuses": {
+    "new": {
+      "name": "new status name"
+    },
+    "existing": {
+      "name": "second status name"
+    }
+  },
+  "labels": {
+    "new": {
+      "name": "new label name"
+    },
+    "existing": {
+      "name": "second label name"
+    }
+  },
+  "tasks": {
+    "first": {
+      "name": "first task name",
+      "description": "first task description",
+      "status": "first status name",
+      "executor": "Elbert Abshire",
+      "labels": {
+        "first": "first label name",
+        "second": "third label name"
+      }
+    },
+    "second": {
+      "name": "second task name",
+      "description": "second task description",
+      "status": "second status name",
+      "executor": "Lawrence Kulas",
+      "labels": {
+        "first": "first label name",
+        "second": "second label name"
+      }
+    },
+    "third": {
+      "name": "third task name",
+      "description": "third task description",
+      "status": "second status name",
+      "executor": "Nona Murray"
     }
   }
 }

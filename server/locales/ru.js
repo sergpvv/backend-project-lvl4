@@ -7,7 +7,7 @@ export default {
       session: {
         create: {
           success: 'Вы залогинены',
-          error: 'Неправильный емейл или пароль',
+          error: 'Неправильный адрес электронной почты или пароль',
         },
         delete: {
           success: 'Вы разлогинены',
@@ -38,7 +38,10 @@ export default {
       },
       users: {
         id: 'ID',
-        email: 'Email',
+        firstName: 'Имя',
+        lastName: 'Фамилия',
+        email: 'Адрес электронной почты',
+        password: 'Пароль',
         createdAt: 'Дата создания',
         new: {
           submit: 'Сохранить',
