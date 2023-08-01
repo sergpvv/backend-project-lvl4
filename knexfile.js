@@ -2,6 +2,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { knexSnakeCaseMappers } from 'objection';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -10,27 +11,32 @@ const migrations = {
 };
 
 export const development = {
-  client: 'sqlite3',
+  client: 'better-sqlite3',
   connection: {
     filename: './database.sqlite',
   },
   useNullAsDefault: true,
+  debug: true,
   migrations,
+  ...knexSnakeCaseMappers(),
 };
 
 export const test = {
-  client: 'sqlite3',
+  client: 'better-sqlite3',
   connection: ':memory:',
   useNullAsDefault: true,
   // debug: true,
   migrations,
+  ...knexSnakeCaseMappers(),
 };
 
 export const production = {
-  client: 'sqlite3',
+  client: 'better-sqlite3',
   connection: {
     filename: './database.sqlite',
   },
   useNullAsDefault: true,
+  // debug: true,
   migrations,
+  ...knexSnakeCaseMappers(),
 };
