@@ -12,19 +12,16 @@ export default (app) => {
     .get('/users/new', { name: 'newUser' }, (req, reply) => {
       const user = new app.objection.models.user();
       reply.render('users/new', { user });
-      return reply;
+      // return reply;
     })
     .get('/users/:id/edit', { name: 'editUser' }, async (req, reply) => {
       const { id } = req.params;
-      const { body, query, params } = req;
-      const request = { body, query, params };
-      console.log('!------------->request:', JSON.stringify(request, '  ', null), '\nid:', id);
-      const user = await app.objection.models.user.query().where('id', id);
-      console.log('!------------->user:', JSON.stringify(user, '  ', null));
+      const user = await app.objection.models.user.query().findById(id);
+      // console.log('!------------->user:', JSON.stringify(user, '  ', null));
       reply.render('users/edit', { user });
       return reply;
     })
-    .post('/users', async (req, reply) => {
+    .post('/users', { name: 'createUser' }, async (req, reply) => {
       const user = new app.objection.models.user();
       user.$set(req.body.data);
       try {
@@ -38,21 +35,45 @@ export default (app) => {
       }
       return reply;
     })
-    .patch('/users/:id', async (req, reply) => {
+    .post('/users/:id', { name: 'patchUser' }, async (req, reply) => {
       const { id } = req.params;
-      // const { query, params } = req;
-      // const request = { query, params };
-      // console.log(JSON.stringify(request, '  ', null));
-      const user = await app.objection.models.user.query().where('id', id);
+      const {
+        body, query, params, headers,
+      } = req;
+      const request = {
+        body, query, params, headers,
+      };
+      const {
+        firstName, lastName, email, password,
+      } = req.body.data;
+      const user = {
+        firstName, lastName, email, password,
+      };
+      console.log('!----------->request:', JSON.stringify(request, '  ', null));
+      // const user = await app.objection.models.user.query().findById(id);
       try {
         const validUser = await app.objection.models.user.fromJson(req.body.data);
-        await app.objection.models.user.query().findById(2).patch(validUser);
+        await app.objection.models.user.query().findById(id).patch(validUser);
         req.flash('info', i18next.t('flash.users.edit.success'));
         reply.redirect(app.reverse('/users'));
-      } catch ({ data }) {
+      // } catch ({ data }) {
+      } catch (e) {
+        const { data } = e;
+        console.error('!----------->error:', JSON.stringify(e, '  ', null));
         req.flash('error', i18next.t('flash.users.edit.error'));
         reply.render('users/edit', { user, errors: data });
       }
       return reply;
+    /* })
+
+    .all('/users/:id', (req, reply) => {
+      const {
+        body, query, params, headers,
+      } = req;
+      const request = {
+        body, query, params, headers,
+      };
+      console.log('!----------->request:', JSON.stringify(request, '  ', null));
+      reply.render('/'); */
     });
 };
