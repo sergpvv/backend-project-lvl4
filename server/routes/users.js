@@ -36,29 +36,32 @@ export default (app) => {
     })
     .patch('/users/:id', { name: 'patchUser' }, async (req, reply) => {
       const { id } = req.params;
-      const {
-        body, query, params, headers,
-      } = req;
-      const request = {
-        body, query, params, headers,
-      };
       const user = new app.objection.models.user();
       user.$set(req.body.data);
-      console.log('!----------->request:', JSON.stringify(request, null, '  '));
-      console.log('!-------------->user:', JSON.stringify(user, null, '  '));
       try {
-        // const validUser = await app.objection.models.user.fromJson(req.body.data);
-        // console.log('!-------------->validUser:', JSON.stringify(validUser, null, '  '));
-        await app.objection.models.user.query().debug().patch(user).findById(id);
+        const userInstance = await app.objection.models.user.query().findById(id).debug();
+        await userInstance.$query().patch(user).debug();
         req.flash('info', i18next.t('flash.users.edit.success'));
-        reply.redirect(app.reverse('root'));
-
-      // } catch ({ data }) {
-      } catch (e) {
-        const { data } = e;
-        console.error('!----------->error:', JSON.stringify(e, null, '  '));
+        const users = await app.objection.models.user.query().debug();
+        reply.render('users/index', { users });
+      } catch ({ data }) {
         req.flash('error', i18next.t('flash.users.edit.error'));
         reply.render('users/edit', { user, errors: data });
+      }
+      return reply;
+    })
+    .delete('/users/:id', { name: 'deleteUser' }, async (req, reply) => {
+      const { id } = req.params;
+      try {
+        const userInstance = await app.objection.models.user.query().findById(id).debug();
+        await userInstance.$query().delete().debug();
+        req.flash('info', i18next.t('flash.users.delete.success'));
+        const users = await app.objection.models.user.query().debug();
+        reply.render('users/index', { users });
+      } catch ({ data }) {
+        req.flash('error', i18next.t('flash.users.delete.error'));
+        const users = await app.objection.models.user.query().debug();
+        reply.render('users/index', { users });
       }
       return reply;
     });
