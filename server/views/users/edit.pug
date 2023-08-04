@@ -7,4 +7,4 @@ block content
   +formFor()(action=`/users/${user.id}` method='post')
     each field in ['firstName', 'lastName', 'email', 'password']
       +input(user, field, errors, t(`views.users.${field}`))(type=`${field === 'password' ? field : 'text'}` value=`${user[field]}`)
-    +buttonTo('/users/#{user.id}', 'post')(class='btn btn-success' value=t('views.users.edit'))
+    +buttonTo('/users/#{user.id}', 'patch')(class='btn btn-success' value=t('views.users.edit'))
