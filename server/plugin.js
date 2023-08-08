@@ -2,6 +2,7 @@
 
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 import fastifyStatic from '@fastify/static';
 
 // import fastifyErrorPage from 'fastify-error-page';
@@ -10,7 +11,9 @@ import Youch from 'youch';
 
 import pointOfView from 'point-of-view';
 import fastifyFormbody from '@fastify/formbody';
+
 import fastifySecureSession from '@fastify/secure-session';
+
 import fastifyPassport from '@fastify/passport';
 import fastifySensible from '@fastify/sensible';
 // import { plugin as fastifyReverseRoutes } from 'fastify-reverse-routes';
@@ -109,6 +112,7 @@ const registerPlugins = async (app) => {
   app.register(fastifyFormbody, { parser: qs.parse });
   app.register(fastifySecureSession, {
     secret: process.env.SESSION_KEY,
+    key: fs.readFileSync(path.join(__dirname, 'secret-key')),
     cookie: {
       path: '/',
     },
