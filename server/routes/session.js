@@ -6,15 +6,14 @@ export default (app) => {
   app
     .get('/session/new', { name: 'newSession' }, (req, reply) => {
       // if session cookie exist
-      const data = req.session.get('data');
-      if (data) {
-        console.log('!------->request.session.get(\'data\'):', JSON.stringify(data, null, '  '));
-        reply.redirect(app.reverse('users'));
-        return reply;
+      const user = req.session.get('data');
+      if (user) {
+        console.log('!------->request.session.get(\'data\'):', JSON.stringify(user, null, '  '));
+        return reply.redirect(app.reverse('users'));
       }
 
       const signInForm = {};
-      reply.render('session/new', { signInForm });
+      return reply.render('session/new', { signInForm });
     })
     .post('/session', { name: 'session' }, app.fp.authenticate('form', async (req, reply, err, user) => {
       if (err) {
@@ -30,16 +29,16 @@ export default (app) => {
       await req.logIn(user);
 
       // setup session cookie
-      console.log('!---> req.session.set(\'data\', req.body) <---!\n!--->req.body:', JSON.stringify(req.body, null, '  '));
+      console.log('!--->user:', JSON.stringify(user, null, '  '));
+      console.log('!--->try req.session.set(\'data\', user)');
       try {
-        req.session.set('data', req.body);
-      } catch (err) {
-        console.log('!--->req.session.set(\'data\', req.body) failure with err:', JSON.stringify(err, null, '  '));
+        req.session.set('data', user);
+        req.flash('success', i18next.t('flash.session.create.success'));
+        return reply.redirect(app.reverse('root'));
+      } catch (e) {
+        console.log('!--->req.session.set(\'data\', user) failure:', JSON.stringify(e, null, '  '));
         return reply.redirect(app.reverse('root'));
       }
-
-      req.flash('success', i18next.t('flash.session.create.success'));
-      return reply.redirect(app.reverse('root'));
     }))
     .delete('/session', (req, reply) => {
       req.logOut();
