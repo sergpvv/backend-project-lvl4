@@ -17,14 +17,14 @@ export default (app) => {
     .get('/users/:id/edit', { name: 'editUser' }, async (req, reply) => {
       const { id } = req.params;
       const currentUserId = req.session.get('userId');
-      const users = await app.objection.models.user.query();
       if (!currentUserId) {
         req.flash('error', i18next.t('flash.authError'));
-        reply.render('users/index', { users });
+        reply.redirect(app.reverse('root'));
         return reply;
       }
       if (!isEqual(id, currentUserId)) {
         req.flash('error', i18next.t('flash.accessDenied'));
+        const users = await app.objection.models.user.query();
         reply.render('users/index', { users });
         return reply;
       }
@@ -71,25 +71,28 @@ export default (app) => {
     .delete('/users/:id', { name: 'deleteUser' }, async (req, reply) => {
       const { id } = req.params;
       const currentUserId = req.session.get('userId');
-      const users = await app.objection.models.user.query();
       if (!currentUserId) {
         req.flash('error', i18next.t('flash.authError'));
-        reply.render('users/index', { users });
+        reply.redirect(app.reverse('root'));
         return reply;
       }
       if (!isEqual(id, currentUserId)) {
         req.flash('error', i18next.t('flash.accessDenied'));
+        const users = await app.objection.models.user.query();
         reply.render('users/index', { users });
         return reply;
       }
       try {
+        req.logOut();
         const userInstance = await app.objection.models.user.query().findById(id);
         await userInstance.$query().delete();
         req.flash('info', i18next.t('flash.users.delete.success'));
-        reply.render('users/index', { users: await app.objection.models.user.query() });
+        const users = await app.objection.models.user.query();
+        reply.render('users/index', { users });
       } catch ({ data }) {
         req.flash('error', i18next.t('flash.users.delete.error'));
-        reply.render('users/index', { users });
+        const users = await app.objection.models.user.query();
+        reply.render('users/index', { users, errors: data });
       }
       return reply;
     });
