@@ -12,12 +12,8 @@ describe('requests', () => {
 
   beforeAll(async () => {
     app = fastify({
-      logger: {
-        transport: {
-          target: 'pino-pretty',
-          options: { colorize: true },
-        },
-      },
+      exposeHeadRoutes: false,
+      logger: { target: 'pino-pretty' },
     });
     await init(app);
   });
