@@ -4,14 +4,14 @@
    "type": "module",
    "description": "simplified redmine.org-like task management system",
    "engines": {
-      "node": ">=16.x"
+      "node": ">=18.x"
    },
    "main": "server/plugin.js",
    "scripts": {
       "prebuild": "rm -rf dist",
       "test": "jest --verbose --runInBand",
       "build": "webpack",
-      "start": "fastify start server/plugin.js -l trace -P -a 0.0.0.0"
+      "start": "fastify start server/plugin.js -l trace -P -a 0.0.0.0 -o"
    },
    "jest": {
       "modulePathIgnorePatterns": [
@@ -38,6 +38,7 @@
       "@fastify/secure-session": "^6.2.0",
       "@fastify/sensible": "^5.2.0",
       "@fastify/static": "^6.10.2",
+      "@fastify/view": "^8.0.0",
       "@vscode/sqlite3": "^5.1.2",
       "better-sqlite3": "^8.5.0",
       "bootstrap": "^5.3.1",

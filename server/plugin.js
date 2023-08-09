@@ -9,7 +9,7 @@ import fastifyStatic from '@fastify/static';
 import fp from 'fastify-plugin';
 import Youch from 'youch';
 
-import pointOfView from 'point-of-view';
+import fastifyView from '@fastify/view';
 import fastifyFormbody from '@fastify/formbody';
 
 import fastifySecureSession from '@fastify/secure-session';
@@ -39,7 +39,7 @@ const mode = process.env.NODE_ENV || 'development';
 
 const setUpViews = (app) => {
   const helpers = getHelpers(app);
-  app.register(pointOfView, {
+  app.register(fastifyView, {
     engine: {
       pug: Pug,
     },
@@ -109,8 +109,8 @@ const registerPlugins = async (app) => {
   ));
 
   await app.register(fastifyReverseRoutes);
-  app.register(fastifyFormbody, { parser: qs.parse });
-  app.register(fastifySecureSession, {
+  await app.register(fastifyFormbody, { parser: qs.parse });
+  await app.register(fastifySecureSession, {
     secret: process.env.SESSION_KEY,
     key: fs.readFileSync(path.join(__dirname, 'secret-key')),
     cookie: {
@@ -136,14 +136,18 @@ const registerPlugins = async (app) => {
   )(...args));
 
   await app.register(fastifyMethodOverride);
-  app.register(fastifyObjectionjs, {
+  await app.register(fastifyObjectionjs, {
     knexConfig: knexConfig[mode],
     models,
   });
 };
 
+export const options = {
+  exposeHeadRoutes: false,
+};
+
 // eslint-disable-next-line no-unused-vars
-export default async (app, options) => {
+export default async (app, _options) => {
   await registerPlugins(app);
 
   await setupLocalization();
