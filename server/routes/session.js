@@ -5,13 +5,6 @@ import i18next from 'i18next';
 export default (app) => {
   app
     .get('/session/new', { name: 'newSession' }, (req, reply) => {
-      // if session cookie exist
-      const user = req.session.get('data');
-      if (user) {
-        console.log('!------->request.session.get(\'data\'):', JSON.stringify(user, null, '  '));
-        return reply.redirect(app.reverse('users'));
-      }
-
       const signInForm = {};
       return reply.render('session/new', { signInForm });
     })
@@ -24,21 +17,15 @@ export default (app) => {
         const errors = {
           email: [{ message: i18next.t('flash.session.create.error') }],
         };
-        return reply.render('session/new', { signInForm, errors });
+        reply.render('session/new', { signInForm, errors });
+        return reply;
       }
       await req.logIn(user);
-
-      // setup session cookie
-      console.log('!--->user:', JSON.stringify(user, null, '  '));
-      console.log('!--->try req.session.set(\'data\', user)');
-      try {
-        req.session.set('data', user);
-        req.flash('success', i18next.t('flash.session.create.success'));
-        return reply.redirect(app.reverse('root'));
-      } catch (e) {
-        console.log('!--->req.session.set(\'data\', user) failure:', JSON.stringify(e, null, '  '));
-        return reply.redirect(app.reverse('root'));
-      }
+      // console.log('!--->user:', JSON.stringify(user, null, '  '), '\n---logged in!');
+      req.session.set('userId', user.id);
+      req.flash('success', i18next.t('flash.session.create.success'));
+      reply.redirect(app.reverse('root'));
+      return reply;
     }))
     .delete('/session', (req, reply) => {
       req.logOut();

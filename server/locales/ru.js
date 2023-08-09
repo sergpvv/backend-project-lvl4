@@ -28,6 +28,8 @@ export default {
         },
       },
       authError: 'Доступ запрещён! Пожалуйста, авторизируйтесь.',
+      accessDenied: 'Вы не можете редактировать или удалять другого пользователя',
+      suckerPunch: 'Tut, tut you naughty boy... you shouldn\'t do that',
     },
     layouts: {
       application: {

@@ -1,6 +1,7 @@
 // @ts-check
 
 import i18next from 'i18next';
+import isEqual from '../helpers/isEqual.js';
 
 export default (app) => {
   app
@@ -12,10 +13,21 @@ export default (app) => {
     .get('/users/new', { name: 'newUser' }, (req, reply) => {
       const user = new app.objection.models.user();
       reply.render('users/new', { user });
-      // return reply;
     })
     .get('/users/:id/edit', { name: 'editUser' }, async (req, reply) => {
       const { id } = req.params;
+      const currentUserId = req.session.get('userId');
+      const users = await app.objection.models.user.query();
+      if (!currentUserId) {
+        req.flash('error', i18next.t('flash.authError'));
+        reply.render('users/index', { users });
+        return reply;
+      }
+      if (!isEqual(id, currentUserId)) {
+        req.flash('error', i18next.t('flash.accessDenied'));
+        reply.render('users/index', { users });
+        return reply;
+      }
       const user = await app.objection.models.user.query().findById(id);
       reply.render('users/edit', { user });
       return reply;
@@ -36,13 +48,19 @@ export default (app) => {
     })
     .patch('/users/:id', { name: 'patchUser' }, async (req, reply) => {
       const { id } = req.params;
+      const currentUserId = req.session.get('userId');
+      if (!currentUserId || !isEqual(id, currentUserId)) {
+        req.flash('error', i18next.t('flash.suckerPunch'));
+        reply.redirect(app.reverse('root'));
+        return reply;
+      }
       const user = new app.objection.models.user();
       user.$set(req.body.data);
       try {
-        const userInstance = await app.objection.models.user.query().findById(id).debug();
-        await userInstance.$query().patch(user).debug();
+        const userInstance = await app.objection.models.user.query().findById(id);
+        await userInstance.$query().patch(user);
         req.flash('info', i18next.t('flash.users.edit.success'));
-        const users = await app.objection.models.user.query().debug();
+        const users = await app.objection.models.user.query();
         reply.render('users/index', { users });
       } catch ({ data }) {
         req.flash('error', i18next.t('flash.users.edit.error'));
@@ -52,15 +70,25 @@ export default (app) => {
     })
     .delete('/users/:id', { name: 'deleteUser' }, async (req, reply) => {
       const { id } = req.params;
-      try {
-        const userInstance = await app.objection.models.user.query().findById(id).debug();
-        await userInstance.$query().delete().debug();
-        req.flash('info', i18next.t('flash.users.delete.success'));
-        const users = await app.objection.models.user.query().debug();
+      const currentUserId = req.session.get('userId');
+      const users = await app.objection.models.user.query();
+      if (!currentUserId) {
+        req.flash('error', i18next.t('flash.authError'));
         reply.render('users/index', { users });
+        return reply;
+      }
+      if (!isEqual(id, currentUserId)) {
+        req.flash('error', i18next.t('flash.accessDenied'));
+        reply.render('users/index', { users });
+        return reply;
+      }
+      try {
+        const userInstance = await app.objection.models.user.query().findById(id);
+        await userInstance.$query().delete();
+        req.flash('info', i18next.t('flash.users.delete.success'));
+        reply.render('users/index', { users: await app.objection.models.user.query() });
       } catch ({ data }) {
         req.flash('error', i18next.t('flash.users.delete.error'));
-        const users = await app.objection.models.user.query().debug();
         reply.render('users/index', { users });
       }
       return reply;
