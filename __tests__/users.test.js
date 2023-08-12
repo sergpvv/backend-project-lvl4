@@ -66,7 +66,10 @@ describe('test users CRUD', () => {
       ..._.omit(params, 'password'),
       passwordDigest: encrypt(params.password),
     };
+    console.log('!--->expected:', JSON.stringify(expected, null, '  '));
     const user = await models.user.query().findOne({ email: params.email });
+    const users = await models.user.query();
+    console.log('!--->users:', JSON.stringify(user, null, '  '));
     expect(user).toMatchObject(expected);
   });
 
