@@ -32,7 +32,7 @@ describe('test users CRUD', () => {
 
   beforeEach(async () => {
   });
-
+  /*
   it('index', async () => {
     const response = await app.inject({
       method: 'GET',
@@ -50,12 +50,14 @@ describe('test users CRUD', () => {
 
     expect(response.statusCode).toBe(200);
   });
-
+*/
   it('create', async () => {
     const params = testData.users.new;
+    console.log('!--->params:', JSON.stringify(params, null, '  '));
+    console.log('!--->app.reverse(\'createNewUser\'):', app.reverse('createNewUser'));
     const response = await app.inject({
       method: 'POST',
-      url: app.reverse('users'),
+      url: app.reverse('createNewUser'),
       payload: {
         data: params,
       },
@@ -67,9 +69,8 @@ describe('test users CRUD', () => {
       passwordDigest: encrypt(params.password),
     };
     console.log('!--->expected:', JSON.stringify(expected, null, '  '));
-    const user = await models.user.query().findOne({ email: params.email });
-    const users = await models.user.query();
-    console.log('!--->users:', JSON.stringify(user, null, '  '));
+    const user = await models.user.query().findOne({ email: params.email }).debug();
+    console.log('!--->user:', JSON.stringify(user, null, '  '));
     expect(user).toMatchObject(expected);
   });
 

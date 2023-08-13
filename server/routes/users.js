@@ -37,7 +37,8 @@ export default (app) => {
       user.$set(req.body.data);
       try {
         const validUser = await app.objection.models.user.fromJson(req.body.data);
-        await app.objection.models.user.query().insert(validUser);
+        console.log('!--->validUser:', JSON.stringify(validUser, null, '  '));
+        await app.objection.models.user.query().insert(validUser).debug();
         req.flash('info', i18next.t('flash.users.create.success'));
         reply.redirect(app.reverse('root'));
       } catch ({ data }) {

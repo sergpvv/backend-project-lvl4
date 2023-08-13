@@ -25,7 +25,7 @@ export const test = {
   client: 'better-sqlite3',
   connection: ':memory:',
   useNullAsDefault: true,
-  // debug: true,
+  debug: true,
   migrations,
   ...knexSnakeCaseMappers(),
 };
