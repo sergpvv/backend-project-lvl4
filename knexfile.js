@@ -27,7 +27,6 @@ export const test = {
   useNullAsDefault: true,
   debug: true,
   migrations,
-  // ...knexSnakeCaseMappers(),
 };
 
 export const production = {
@@ -36,7 +35,5 @@ export const production = {
     filename: './database.sqlite',
   },
   useNullAsDefault: true,
-  // debug: true,
   migrations,
-  // ...knexSnakeCaseMappers(),
 };

@@ -6,7 +6,7 @@ import encrypt from '../../server/lib/secure.js';
 
 const numberOfTestUsers = 3;
 
-const getRandom = (n = numberOfTestUsers) => Math.floor(Math.random() * n);
+export const getRandom = (n = numberOfTestUsers) => Math.floor(Math.random() * n);
 
 const generateUser = () => ({
   firstName: faker.person.firstName(),
