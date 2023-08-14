@@ -88,8 +88,8 @@ describe('test users CRUD', () => {
   });
 
   it('edit', async () => {
-    const user = await models.user.query().findOne({ email: testData.users.existing.email });
-    const { id } = user;
+    const user = testData.users.existing;
+    const { id } = await models.user.query().findOne({ email: user.email });
     const response = await app.inject({
       method: 'GET',
       url: `/users/${id}/edit`,
@@ -97,7 +97,7 @@ describe('test users CRUD', () => {
 
     expect(response.statusCode).toBe(302);
 
-    const cookie = await logIn(testData.users.existing);
+    const cookie = await logIn(user);
     const responseEditUser = await app.inject({
       method: 'GET',
       url: `/users/${id}/edit`,
@@ -106,11 +106,11 @@ describe('test users CRUD', () => {
 
     expect(responseEditUser.statusCode).toBe(200);
 
-    const userKeys = _.keys(testData.users.existing);
-    const { length } = userKeys;
-    const key = userKeys[getRandom(length)];
+    const keys = _.keys(user);
+    const { length } = keys;
+    const key = keys[getRandom(length)];
     const editedUser = {
-      ..._.omit(testData.users.existing, key),
+      ..._.omit(user, key),
       [key]: testData.users.new[key],
     };
     const responsePatchUser = await app.inject({
