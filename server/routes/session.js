@@ -21,7 +21,6 @@ export default (app) => {
         return reply;
       }
       await req.logIn(user);
-      // console.log('!--->user:', JSON.stringify(user, null, '  '), '\n---logged in!');
       req.session.set('userId', user.id);
       req.flash('success', i18next.t('flash.session.create.success'));
       reply.redirect(app.reverse('root'));

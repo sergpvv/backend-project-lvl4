@@ -37,12 +37,12 @@ export default (app) => {
       user.$set(req.body.data);
       try {
         const validUser = await app.objection.models.user.fromJson(req.body.data);
-        console.log('!--->validUser:', JSON.stringify(validUser, null, '  '));
+        // console.log('!--->validUser:', JSON.stringify(validUser, null, '  '));
         await app.objection.models.user.query().insert(validUser).debug();
         req.flash('info', i18next.t('flash.users.create.success'));
         reply.redirect(app.reverse('root'));
       } catch ({ data }) {
-        console.log('!--->catch error:', JSON.stringify(data, null, '  '));
+        // console.log('!--->catch error:', JSON.stringify(data, null, '  '));
         req.flash('error', i18next.t('flash.users.create.error'));
         reply.render('users/new', { user, errors: data });
       }
@@ -53,7 +53,7 @@ export default (app) => {
       const currentUserId = req.session.get('userId');
       if (!currentUserId || !isEqual(id, currentUserId)) {
         req.flash('error', i18next.t('flash.suckerPunch'));
-        reply.redirect(app.reverse('root'));
+        reply.code(418).redirect(app.reverse('root'));
         return reply;
       }
       const user = new app.objection.models.user();

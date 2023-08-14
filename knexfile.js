@@ -2,7 +2,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { knexSnakeCaseMappers } from 'objection';
+// import { knexSnakeCaseMappers } from 'objection';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,7 +18,7 @@ export const development = {
   useNullAsDefault: true,
   debug: true,
   migrations,
-  ...knexSnakeCaseMappers(),
+  // ...knexSnakeCaseMappers(),
 };
 
 export const test = {
@@ -27,7 +27,7 @@ export const test = {
   useNullAsDefault: true,
   debug: true,
   migrations,
-  ...knexSnakeCaseMappers(),
+  // ...knexSnakeCaseMappers(),
 };
 
 export const production = {
@@ -38,5 +38,5 @@ export const production = {
   useNullAsDefault: true,
   // debug: true,
   migrations,
-  ...knexSnakeCaseMappers(),
+  // ...knexSnakeCaseMappers(),
 };
