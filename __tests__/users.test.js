@@ -12,7 +12,7 @@ describe('test users CRUD', () => {
   let knex;
   let models;
   const testData = getTestData();
-
+  console.log('!--->tesrData:', JSON.stringify(testData, null, '  '));
   beforeAll(async () => {
     app = fastify({
       exposeHeadRoutes: false,
@@ -32,7 +32,7 @@ describe('test users CRUD', () => {
 
   beforeEach(async () => {
   });
-  /*
+
   it('index', async () => {
     const response = await app.inject({
       method: 'GET',
@@ -50,11 +50,11 @@ describe('test users CRUD', () => {
 
     expect(response.statusCode).toBe(200);
   });
-*/
+
   it('create', async () => {
     const params = testData.users.new;
-    console.log('!--->params:', JSON.stringify(params, null, '  '));
-    console.log('!--->app.reverse(\'createNewUser\'):', app.reverse('createNewUser'));
+    // console.log('!--->params:', JSON.stringify(params, null, '  '));
+    // console.log('!--->app.reverse(\'createNewUser\'):', app.reverse('createNewUser'));
     const response = await app.inject({
       method: 'POST',
       url: app.reverse('createNewUser'),
@@ -63,15 +63,41 @@ describe('test users CRUD', () => {
       },
     });
 
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(302);
     const expected = {
       ..._.omit(params, 'password'),
       passwordDigest: encrypt(params.password),
     };
-    console.log('!--->expected:', JSON.stringify(expected, null, '  '));
+    // console.log('!--->expected:', JSON.stringify(expected, null, '  '));
     const user = await models.user.query().findOne({ email: params.email }).debug();
-    console.log('!--->user:', JSON.stringify(user, null, '  '));
+    // console.log('!--->user:', JSON.stringify(user, null, '  '));
     expect(user).toMatchObject(expected);
+  });
+
+  it('edit', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: app.reverse('newUser'),
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('patch', async () => {
+    const user = testData.users.existing;
+    const editedUser = testData.users.new;
+    const response = await app.inject({
+      method: 'PATCH',
+      url: app.reverse('patchUser'),
+      payload: {
+        data: editedUser,
+        params: {
+          id: 0,
+        },
+      },
+    });
+    expect(response.statusCode).toBe(302);
+    expect(user).toMatchObject(editedUser);
   });
 
   afterEach(async () => {

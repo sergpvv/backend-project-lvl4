@@ -42,6 +42,7 @@ export default (app) => {
         req.flash('info', i18next.t('flash.users.create.success'));
         reply.redirect(app.reverse('root'));
       } catch ({ data }) {
+        console.log('!--->catch error:', JSON.stringify(data, null, '  '));
         req.flash('error', i18next.t('flash.users.create.error'));
         reply.render('users/new', { user, errors: data });
       }
