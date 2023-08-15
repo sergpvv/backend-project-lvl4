@@ -49,7 +49,7 @@ export default (app) => {
       }
       return reply;
     })
-    .delete('/statuses/:id', { name: 'deletetaskStatus', preValidation: app.authenticate }, async (req, reply) => {
+    .delete('/statuses/:id', { name: 'deleteTaskStatus', preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
       try {
         const taskStatus = await app.objection.models.taskStatus.query().findById(id);
