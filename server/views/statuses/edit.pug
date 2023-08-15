@@ -1,0 +1,9 @@
+extends ../layouts/application.pug
+
+block header
+  h1.display-4.fw-bold.mt-4= t('views.statuses.editing')
+
+block content
+  +formFor()(action=`/statuses/${taskStatus.id}` method='post')
+    +input(taskStatus, 'name', errors, t('views.statuses.name'))(type="text" value=`${taskStatus.name}`)
+    +buttonTo(`/statuses/${taskStatus.id}`, 'patch')(class='btn btn-success' value=t('views.edit'))

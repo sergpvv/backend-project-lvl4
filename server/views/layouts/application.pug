@@ -3,7 +3,7 @@ include ../mixins/forms.pug
 doctype html
 html(lang="en")
   head
-    title Hexlet Fastify Boilerplate
+    title= t('appName')
     script(src=assetPath('main.js'))
     link(href=assetPath('main.css') rel="stylesheet")
     meta(name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
@@ -11,22 +11,23 @@ html(lang="en")
     nav.navbar.navbar-expand-lg.navbar-dark.bg-dark.text-white.mb-3
       .container-fluid
         a.navbar-brand(href=route('root'))= t('appName')
-        button.navbar-toggler(data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent")
+        button.navbar-toggler(data-bs-toggle="collapse" data-bs-target="#navbarToggleExternalContent" aria-expanded="true")
           span.navbar-toggler-icon
         .collapse.navbar-collapse(id="navbarToggleExternalContent")
           .container-fluid
-            ul.navbar-nav.mr-auto
-              li.nav-item
+            ul.navbar-nav.justify-content-end.w-100
+              li.nav-item.me-auto
                 a.nav-link(href=route('users'))= t('layouts.application.users')
-          ul.navbar-nav
-            if isAuthenticated()
-              li.nav-item
-                +buttonTo(route('session'), 'delete')(class="btn nav-link" value=t('layouts.application.signOut'))
-            else
-              li.nav-item
-                a.nav-link(href=route('newSession'))= t('layouts.application.signIn')
-              li.nav-item
-                a.nav-link(href=route('newUser'))= t('layouts.application.signUp')
+              if isAuthenticated()
+                li.nav-item
+                  a.nav-link(href=route('statuses'))= t('layouts.application.statuses')
+                li.nav-item
+                  +buttonTo(route('session'), 'delete')(class="btn nav-link" value=t('layouts.application.signOut'))
+              else
+                li.nav-item
+                  a.nav-link(href=route('newSession'))= t('layouts.application.signIn')
+                li.nav-item
+                  a.nav-link(href=route('newUser'))= t('layouts.application.signUp')
     .container.wrapper.flex-grow-1
 
       each messages, type in reply.flash() || []

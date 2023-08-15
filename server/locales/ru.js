@@ -20,16 +20,29 @@ export default {
         },
         edit: {
           error: 'Не удалось изменить пользователя',
-          success: 'Пользователь успешно изменен',
+          success: 'Пользователь успешно изменён',
         },
         delete: {
-          success: 'Пользователь успешно удален',
+          success: 'Пользователь успешно удалён',
           error: 'Не удалось удалить пользователя',
+        },
+      },
+      statuses: {
+        create: {
+          error: 'Не удалось создать статус',
+          success: 'Статус успешно создан',
+        },
+        edit: {
+          error: 'Не удалось изменить статус',
+          success: 'Статус успешно изменён',
+        },
+        delete: {
+          success: 'Статус успешно удалён',
+          error: 'Не удалось удалить статус',
         },
       },
       authError: 'Доступ запрещён! Пожалуйста, авторизируйтесь.',
       accessDenied: 'Вы не можете редактировать или удалять другого пользователя',
-      suckerPunch: 'Tut, tut you naughty boy... you shouldn\'t do that',
     },
     layouts: {
       application: {
@@ -37,31 +50,34 @@ export default {
         signIn: 'Вход',
         signUp: 'Регистрация',
         signOut: 'Выход',
+        statuses: 'Статусы',
       },
     },
     views: {
+      actions: 'Действия',
+      create: 'Создать',
+      save: 'Сохранить',
+      delete: 'Удалить',
+      edit: 'Изменить',
+      id: 'ID',
+      createdAt: 'Дата создания',
       session: {
         new: {
-          signIn: 'Вход',
           submit: 'Войти',
         },
       },
       users: {
-        id: 'ID',
         firstName: 'Имя',
         lastName: 'Фамилия',
         email: 'Email',
         password: 'Пароль',
-        createdAt: 'Дата создания',
-        new: {
-          submit: 'Сохранить',
-          signUp: 'Регистрация',
-        },
-        actions: 'Действия',
-        edit: 'Изменить',
-        editUser: 'Изменение пользователя',
-        editedAt: 'Дата изменения',
-        delete: 'Удалить',
+        editing: 'Изменение пользователя',
+      },
+      statuses: {
+        name: 'Наименование',
+        create: 'Создать статус',
+        creation: 'Создание статуса',
+        editing: 'Изменение статуса',
       },
       welcome: {
         index: {

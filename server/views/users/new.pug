@@ -1,12 +1,13 @@
 extends ../layouts/application.pug
 
 block header
-  = t('views.users.new.signUp')
+  h1.display-4.fw-bold.mt-4= t('layouts.application.signUp')
 
 block content
-  +formFor()(action=route('users') method='post')
-    +input(user, 'firstName', errors, t('views.users.firstName'))(type="text")
-    +input(user, 'lastName', errors, t('views.users.lastName'))(type="text")
-    +input(user, 'email', errors, t('views.users.email'))(type="text")
-    +input(user, 'password', errors, t('views.users.password'))(type="password")
-    +submit(user)(value=t('views.users.new.submit'))
+  .d-flex.align-items-center.justify-content-center
+    +formFor()(action=route('users') method='post')
+      +input(user, 'firstName', errors, t('views.users.firstName'))(type="text")
+      +input(user, 'lastName', errors, t('views.users.lastName'))(type="text")
+      +input(user, 'email', errors, t('views.users.email'))(type="text")
+      +input(user, 'password', errors, t('views.users.password'))(type="password")
+      +submit(user)(value=t('views.save'))

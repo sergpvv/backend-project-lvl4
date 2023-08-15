@@ -1,15 +1,18 @@
 extends ../layouts/application.pug
+        
+block header
+  h1.display-4.fw-bold.mt-4= t('layouts.application.users')
 
 block content
   table.table.table-striped
     thead
       tr
-        th= t('views.users.id')
+        th= t('views.id')
         th= t('views.users.firstName')
         th= t('views.users.lastName')
         th= t('views.users.email')
-        th= t('views.users.createdAt')
-        th= t('views.users.actions')
+        th= t('views.createdAt')
+        th= t('views.actions')
     tbody
       each user in users
         tr
@@ -20,5 +23,5 @@ block content
           td= formatDate(user.createdAt)
           td
             div(class='d-flex flex-wrap')
-              a(class='btn btn-primary me-1' href=`/users/${user.id}/edit`)= t('views.users.edit')
-              +buttonTo(`/users/${user.id}`, 'delete')(class='btn btn-danger' value=t('views.users.delete'))
+              a(class='btn btn-primary me-1' href=`/users/${user.id}/edit`)= t('views.edit')
+              +buttonTo(`/users/${user.id}`, 'delete')(class='btn btn-danger' value=t('views.delete'))
