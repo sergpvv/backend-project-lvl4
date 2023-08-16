@@ -35,15 +35,16 @@ export default (app) => {
     })
     .patch('/statuses/:id', { name: 'patchTaskStatus', preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
-      const taskStatus = new app.objection.models.taskStatus();
-      taskStatus.$set(req.body.data);
       try {
-        const taskStatusInstance = await app.objection.models.taskStatus.query().findById(id);
-        await taskStatusInstance.$query().patch(taskStatus);
+        const validTaskStatus = await app.objection.models.taskStatus.fromJson(req.body.data);
+        const taskStatus = await app.objection.models.taskStatus.query().findById(id);
+        await taskStatus.$query().patch(validTaskStatus);
         req.flash('info', i18next.t('flash.statuses.edit.success'));
         const statuses = await app.objection.models.taskStatus.query();
         reply.render('statuses/index', { statuses });
       } catch ({ data }) {
+        const taskStatus = req.body.data;
+        taskStatus.id = id;
         req.flash('error', i18next.t('flash.statuses.edit.error'));
         reply.render('statuses/edit', { taskStatus, errors: data });
       }

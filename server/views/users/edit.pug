@@ -5,6 +5,7 @@ block header
 
 block content
   +formFor()(action=`/users/${user.id}` method='post')
-    each field in ['firstName', 'lastName', 'email', 'password']
-      +input(user, field, errors, t(`views.users.${field}`))(type=`${field === 'password' ? field : 'text'}` value=`${user[field]}`)
+    each field in ['firstName', 'lastName', 'email']
+      +input(user, field, errors, t(`views.users.${field}`))(type='text' value=`${user[field]}`)
+    +input(user, 'password', errors, t('views.users.password'))(type='password' value)
     +buttonTo('/users/#{user.id}', 'patch')(class='btn btn-success' value=t('views.edit'))
