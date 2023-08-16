@@ -28,8 +28,6 @@ export default (app) => {
       return reply;
     })
     .post('/users', { name: 'createNewUser' }, async (req, reply) => {
-      // const user = new app.objection.models.user();
-      // user.$set(req.body.data);
       try {
         const validUser = await app.objection.models.user.fromJson(req.body.data);
         await app.objection.models.user.query().insert(validUser).debug();
@@ -45,7 +43,6 @@ export default (app) => {
       const { id } = req.params;
       const currentUserId = req.session.get('userId');
       const user = await app.objection.models.user.query().findById(id);
-      console.log('!-------------> req.body.data:', JSON.stringify(req.body.data, null, '  '));
       if (!isEqual(id, currentUserId)) {
         req.flash('error', i18next.t('flash.accessDenied'));
         const users = await app.objection.models.user.query();
@@ -54,7 +51,6 @@ export default (app) => {
       }
       try {
         const validUser = await app.objection.models.user.fromJson(req.body.data);
-        console.log('!-------------> validUser:', JSON.stringify(validUser, null, '  '));
         await user.$query().patch(validUser);
         req.flash('info', i18next.t('flash.users.edit.success'));
         const users = await app.objection.models.user.query();
