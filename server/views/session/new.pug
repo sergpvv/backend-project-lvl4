@@ -7,5 +7,5 @@ block content
   .d-flex.align-items-center.justify-content-center
     +formFor()(action=route('session') method='post')
       +input(signInForm, 'email', errors, t('views.users.email'))(type="text")
-      +input(signInForm, 'password', t('views.users.password'))(type="password")
+      +input(signInForm, 'password', errors, t('views.users.password'))(type="password")
       +submit(signInForm)(value=t('views.session.new.submit'))
