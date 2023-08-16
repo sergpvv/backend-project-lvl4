@@ -9,23 +9,44 @@ describe('test users CRUD', () => {
   let app;
   let knex;
   let models;
-  let id;
+  let cookie;
+
   const testData = getTestData();
+
   const signIn = async () => {
-    await app.inject({
+    const response = await app.inject({
       method: 'POST',
       url: app.reverse('session'),
       payload: {
         data: testData.users.existing,
       },
     });
+    const [sessionCookie] = response.cookies;
+    const { name, value } = sessionCookie;
+    cookie = { [name]: value };
   };
 
   const signOut = async () => {
     await app.inject({
       method: 'DELETE',
-      url: app.reverse('deleteSession'),
+      url: app.reverse('session'),
+      cookies: cookie,
     });
+  };
+
+  const getName = async (id) => {
+    const { name } = await models.taskStatus.query().findById(id);
+    return name;
+  };
+
+  const findByName = async (name) => {
+    const taskStatus = await models.taskStatus.query().findOne({ name });
+    return taskStatus;
+  };
+
+  const findById = async (id) => {
+    const taskStatus = await models.taskStatus.query().findById(id);
+    return taskStatus;
   };
 
   beforeAll(async () => {
@@ -41,9 +62,6 @@ describe('test users CRUD', () => {
   });
 
   beforeEach(async () => {
-    models.taskStatus.query().insert({ name: 'a' });
-    const taskStatus = models.taskStatus.query().findOne({ name: 'a' });
-    id = taskStatus.id;
   });
 
   it('index', async () => {
@@ -55,9 +73,11 @@ describe('test users CRUD', () => {
     expect(response.statusCode).toBe(302);
 
     await signIn();
+
     response = await app.inject({
       method: 'GET',
       url: app.reverse('statuses'),
+      cookies: cookie,
     });
 
     expect(response.statusCode).toBe(200);
@@ -76,15 +96,67 @@ describe('test users CRUD', () => {
     response = await app.inject({
       method: 'GET',
       url: app.reverse('newTaskStatus'),
+      cookies: cookie,
     });
 
     expect(response.statusCode).toBe(200);
   });
 
   it('create', async () => {
+    let response = await app.inject({
+      method: 'GET',
+      url: app.reverse('createTaskStatus'),
+    });
+
+    expect(response.statusCode).toBe(302);
+
+    response = await app.inject({
+      method: 'POST',
+      url: app.reverse('createTaskStatus'),
+      body: {
+        data: {
+          name: 'a',
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(await findByName('a')).not.toBeDefined();
+
     await signIn();
 
-    const response = await app.inject({
+    response = await app.inject({
+      method: 'POST',
+      url: app.reverse('createTaskStatus'),
+      body: {
+        data: {
+          name: '',
+        },
+      },
+      cookies: cookie,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(await findByName('')).not.toBeDefined();
+
+    response = await app.inject({
+      method: 'POST',
+      url: app.reverse('createTaskStatus'),
+      body: {
+        data: {
+          name: 'a',
+        },
+      },
+      cookies: cookie,
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(await findByName('a')).toBeDefined();
+  });
+
+  it('edit', async () => {
+    await signIn();
+    await app.inject({
       method: 'POST',
       url: app.reverse('createTaskStatus'),
       body: {
@@ -92,15 +164,27 @@ describe('test users CRUD', () => {
           name: 'b',
         },
       },
+      cookies: cookie,
     });
 
-    expect(response.statusCode).toBe(200);
+    const { id } = await findByName('b');
 
-    expect(await models.statuses.query().findOne({ name: 'b' })).toBeDefined();
-  });
+    await signOut();
 
-  it('edit', async () => {
     let response = await app.inject({
+      method: 'PATCH',
+      url: `/statuses/${id}`,
+      body: {
+        data: {
+          name: 'c',
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(302);
+    expect(await getName(id)).toBe('b');
+
+    response = await app.inject({
       method: 'GET',
       url: `/statuses/${id}/edit`,
     });
@@ -112,6 +196,7 @@ describe('test users CRUD', () => {
     response = await app.inject({
       method: 'GET',
       url: `/statuses/${id}/edit`,
+      cookies: cookie,
     });
 
     expect(response.statusCode).toBe(200);
@@ -121,33 +206,56 @@ describe('test users CRUD', () => {
       url: `/statuses/${id}`,
       body: {
         data: {
-          name: 'b',
+          name: 'c',
         },
       },
+      cookies: cookie,
     });
 
     expect(response.statusCode).toBe(200);
-
-    const { name } = await models.statuses.query().findById(id);
-
-    expect(name).toBe('b');
+    expect(await getName(id)).toBe('c');
   });
 
   it('delete', async () => {
-    const response = await app.inject({
+    await signIn();
+
+    await app.inject({
+      method: 'POST',
+      url: app.reverse('createTaskStatus'),
+      body: {
+        data: {
+          name: 'd',
+        },
+      },
+      cookies: cookie,
+    });
+
+    const { id } = await findByName('d');
+
+    await signOut();
+
+    let response = await app.inject({
       method: 'DELETE',
       url: `/statuses/${id}`,
     });
 
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(id)).toBeDefined();
 
-    expect(await models.statuses.query().findById(id)).not.toBeDefined();
+    await signIn();
+
+    response = await app.inject({
+      method: 'DELETE',
+      url: `/statuses/${id}`,
+      cookies: cookie,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(await findById(id)).not.toBeDefined();
   });
 
   afterEach(async () => {
-    const taskStatus = await models.taskStatus.query().findById(id);
-    if (!taskStatus) return;
-    await taskStatus.$query().delete();
+    await signOut();
   });
 
   afterAll(async () => {
