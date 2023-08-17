@@ -10,7 +10,7 @@ block content
       thead
         tr
           th= t('views.id')
-          th= t('views.statuses.name')
+          th= t('views.name')
           th= t('views.createdAt')
           th= t('views.actions')
       tbody
@@ -21,5 +21,5 @@ block content
             td= formatDate(taskStatus.createdAt)
             td
               .d-flex
-                a(class='btn btn-primary me-1' href=`/statuses/${taskStatus.id}/edit`)= t('views.edit')
+                a.btn.btn-primary.me-1(href=`/statuses/${taskStatus.id}/edit`)= t('views.edit')
                 +buttonTo(`/statuses/${taskStatus.id}`, 'delete')(class='btn btn-danger' value=t('views.delete'))

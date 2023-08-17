@@ -1,0 +1,9 @@
+extends ../layouts/application.pug
+
+block header
+  h1.display-4.fw-bold.mt-4= t('views.labels.creation')
+
+block content
+  +formFor()(action=route('labels') method='post')
+    +input(label, 'name', errors, t('views.statuses.name'))(type="text")
+    +submit(label)(value=t('views.create'))

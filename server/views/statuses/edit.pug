@@ -5,5 +5,5 @@ block header
 
 block content
   +formFor()(action=`/statuses/${taskStatus.id}` method='post')
-    +input(taskStatus, 'name', errors, t('views.statuses.name'))(type="text" value=`${taskStatus.name}`)
+    +input(taskStatus, 'name', errors, t('views.name'))(type="text" value=`${taskStatus.name}`)
     +buttonTo(`/statuses/${taskStatus.id}`, 'patch')(class='btn btn-success' value=t('views.edit'))

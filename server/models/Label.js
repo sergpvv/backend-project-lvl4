@@ -5,9 +5,9 @@ import Task from './Task.js';
 
 const unique = objectionUnique({ fields: ['name'] });
 
-export default class TaskStatus extends unique(BaseModel) {
+export default class Label extends unique(BaseModel) {
   static get tableName() {
-    return 'statuses';
+    return 'labels';
   }
 
   static get jsonSchema() {
@@ -22,12 +22,16 @@ export default class TaskStatus extends unique(BaseModel) {
   }
 
   static relationMappings = {
-    tasks: {
-      relation: Model.HasManyRelation,
+    task: {
+      relation: Model.HasOneThroughRelation,
       modelClass: Task,
       join: {
-        from: 'statuses.id',
-        to: 'tasks.statusId ',
+        from: 'labels.id',
+        through: {
+          from: 'tasks_labels.labelId',
+          to: 'tasks_labels.taskId',
+        },
+        to: 'tasks.Id ',
       },
     },
   };
