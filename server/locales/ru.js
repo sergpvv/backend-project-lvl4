@@ -51,6 +51,8 @@ export default {
         signUp: 'Регистрация',
         signOut: 'Выход',
         statuses: 'Статусы',
+        labels: 'Метки',
+        tasks: 'Задачи',
       },
     },
     views: {
@@ -60,6 +62,7 @@ export default {
       delete: 'Удалить',
       edit: 'Изменить',
       id: 'ID',
+      name: 'Наименование',
       createdAt: 'Дата создания',
       session: {
         new: {
@@ -74,10 +77,23 @@ export default {
         editing: 'Изменение пользователя',
       },
       statuses: {
-        name: 'Наименование',
         create: 'Создать статус',
         creation: 'Создание статуса',
         editing: 'Изменение статуса',
+      },
+      labels: {
+        create: 'Создать метку',
+        creation: 'Создание метки',
+        editing: 'Изменение метки',
+      },
+      tasks: {
+        status: 'Статус',
+        creator: 'Автор',
+        executor: 'Исполнитель',
+        create: 'Создать задачу',
+        label: 'Метка',
+        myTasksOnly: 'Только мои задачи',
+        show: 'Показать',
       },
       welcome: {
         index: {
