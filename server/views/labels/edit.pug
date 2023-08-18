@@ -6,4 +6,4 @@ block header
 block content
   +formFor()(action=`/labels/${label.id}` method='post')
     +input(label, 'name', errors, t('views.name'))(type="text" value=`${label.name}`)
-    +buttonTo(`/labels/${label.id}`, 'patch')(class='btn btn-success' value=t('views.edit'))i
+    +buttonTo(`/labels/${label.id}`, 'patch')(class='btn btn-success' value=t('views.edit'))

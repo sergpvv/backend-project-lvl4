@@ -5,5 +5,5 @@ block header
 
 block content
   +formFor()(action=route('labels') method='post')
-    +input(label, 'name', errors, t('views.statuses.name'))(type="text")
+    +input(label, 'name', errors, t('views.name'))(type="text")
     +submit(label)(value=t('views.create'))

@@ -121,6 +121,7 @@ export default {
         creator: 'Автор',
         executor: 'Исполнитель',
         create: 'Создать задачу',
+        creation: 'Создание задачи',
         labels: 'Метки',
         myTasksOnly: 'Только мои задачи',
         show: 'Показать',

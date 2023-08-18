@@ -7,5 +7,4 @@ block content
   +formFor()(action=route('tasks') method='post')
     +input(task, 'name', errors, t('views.name'))(type='text')
     +input(task, 'description', errors, t('views.tasks.description'), 'textarea')(row='3')
-      
-+submit(task)(value=t('views.create'))
+    +submit(task)(value=t('views.create'))
