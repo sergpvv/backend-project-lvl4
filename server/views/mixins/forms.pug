@@ -1,11 +1,12 @@
 - const getInputName = (property) => `data[${property}]`
 - const getInputId = (property) => `data_${property}`
+- const isTextArea = (tag) => tag === 'textarea'
 
 mixin formFor(entity = null)
   form&attributes(attributes)
     block
 
-mixin input(entity, propertyName, errors = {}, labelText)
+mixin input(entity, propertyName, errors = {}, labelText, tag = 'input')
   - propertyErrors = _.get(errors, propertyName)
   - classLine = 'form-control' + (_.isEmpty(propertyErrors) ? '' : ' is-invalid')
   - inputId = getInputId(propertyName)
@@ -13,14 +14,16 @@ mixin input(entity, propertyName, errors = {}, labelText)
     label(
       for= inputId
     )= labelText
-    input(
+    #[tag(
       id= inputId
-      name=getInputName(propertyName)
-      class=classLine
-      value=_.get(entity, propertyName, '')
-    )&attributes(attributes)
+      name= getInputName(propertyName)
+      class= classLine
+      value= _.get(entity, propertyName, '')
+    )&attributes(attributes)]= _.get(entity, propertyName, '')
     if !_.isEmpty(propertyErrors)
       .invalid-feedback= propertyErrors.map(({ message }) => message).join('. ')
+
+mixin textarea()
 
 mixin submit(form = null)
   input(class='btn btn-success' type='submit')&attributes(attributes)

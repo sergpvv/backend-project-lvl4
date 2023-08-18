@@ -1,7 +1,7 @@
 import objectionUnique from 'objection-unique';
 import { Model } from 'objection';
 import BaseModel from './BaseModel.js';
-import TaskStatus from './TaskStatus';
+import TaskStatus from './TaskStatus.js';
 import User from './User.js';
 import Label from './Label.js';
 
