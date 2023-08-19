@@ -1,38 +1,49 @@
 - const getInputName = (property) => `data[${property}]`
 - const getInputId = (property) => `data_${property}`
-- const isTextArea = (tag) => tag === 'textarea'
+- const isLabels = (str) => str === 'labels'
+- const getName = (entity) => entity.name ?? `${entity.firstName} ${entity.lastName}`
 
 mixin formFor(entity = null)
   form&attributes(attributes)
     block
 
-mixin options(entity, propertyName)
-  - entries = _.get(entity, propertyName)
-  each [id, name] in entries
-    option(value=`${id}`)= name
-
-mixin input(entity, propertyName, errors = {}, labelText, tag = 'input')
+mixin input(entity, propertyName, errors = {}, labelText, tag = 'input', selectOptionsPropertyName)
   - propertyErrors = _.get(errors, propertyName)
   - classLine = 'form-control' + (_.isEmpty(propertyErrors) ? '' : ' is-invalid')
   - inputId = getInputId(propertyName)
+  - inputName = getInputName(propertyName)
+  - inputValue = _.get(entity, propertyName, '')
   .mb-3(class=(errors[propertyName] && 'has-danger'))
     label(
       for= inputId
     )= labelText
-    #{tag}(
-      id= inputId
-      name= getInputName(propertyName)
-      class= classLine
-      unless isTextArea(tag)
-        value= _.get(entity, propertyName, '')
-    )&attributes(attributes)= 
-      case tag
-        when 'input'
-          - break
-        when 'textarea'
-          _.get(entity, propertyName, '')
-        when 'select'
-          +options(entity, propertyName)
+    case tag
+      when 'input'
+        input(
+          id= inputId
+          name= inputName
+          class= classLine
+          value= inputValue
+        )&attributes(attributes)
+      when 'textarea'
+        textarea(
+          id= inputId
+          name= inputName
+          class= classLine
+        )&attributes(attributes)= inputValue
+      when 'select'
+        select(
+          id= inputId
+          name= inputName
+          class= classLine
+        )&attributes(attributes)
+          unless isLabels(propertyName)
+            option      
+          each item in _.get(entity, selectOptionsPropertyName, [])
+            option(
+              value= item.id
+              selected= !isLabels(propertyName) && (item.id == entity[propertyName])
+            )= getName(item)
     if !_.isEmpty(propertyErrors)
       .invalid-feedback= propertyErrors.map(({ message }) => message).join('. ')
 

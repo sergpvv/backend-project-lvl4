@@ -7,4 +7,7 @@ block content
   +formFor()(action=route('tasks') method='post')
     +input(task, 'name', errors, t('views.name'))(type='text')
     +input(task, 'description', errors, t('views.tasks.description'), 'textarea')(row='3')
+    +input(task, 'statusId', errors, t('views.tasks.status'), 'select', 'statuses')
+    +input(task, 'executorId', errors, t('views.tasks.executor'), 'select', 'users')
+    +input(task, 'labels', errors, t('views.tasks.labels'), 'select', 'labels')(multiple='multiple')
     +submit(task)(value=t('views.create'))
