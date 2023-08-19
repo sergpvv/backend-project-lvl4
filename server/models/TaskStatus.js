@@ -1,7 +1,7 @@
 import objectionUnique from 'objection-unique';
-import { Model } from 'objection';
+// import { Model } from 'objection';
 import BaseModel from './BaseModel.js';
-import Task from './Task.js';
+// import Task from './Task.js';
 
 const unique = objectionUnique({ fields: ['name'] });
 
@@ -20,7 +20,7 @@ export default class TaskStatus extends unique(BaseModel) {
       },
     };
   }
-
+/*
   static relationMappings = {
     tasks: {
       relation: Model.HasManyRelation,
@@ -31,4 +31,5 @@ export default class TaskStatus extends unique(BaseModel) {
       },
     },
   };
+*/
 }
