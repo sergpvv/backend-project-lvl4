@@ -71,6 +71,14 @@ export default (app) => {
         reply.render('users/index', { users });
         return reply;
       }
+      const relatedTasks = await app.objection.models.task.query()
+        .where('creatorId', id).orWhere('executorId', id);
+      if (relatedTasks?.length > 0) {
+        req.flash('error', i18next.t('flash.users.delete.error'));
+        const users = await app.objection.models.user.query();
+        reply.render('users/index', { users });
+        return reply;
+      }
       try {
         req.logOut();
         const userInstance = await app.objection.models.user.query().findById(id);
