@@ -44,6 +44,18 @@ export default (app) => {
       reply.render('tasks/new', { task });
       return reply;
     })
+    .get('/tasks/:id', { name: 'taskCard', preValidation: app.authenticate }, async (req, reply) => {
+      const task = await app.objection.models.task.query().findById(req.params.id);
+      task.labels = await app.objection.models.label.query();
+      const taskStatus = await task.$relatedQuery('status');
+      const taskCreator = await task.$relatedQuery('creator');
+      const taskExecutor = await task.$relatedQuery('executor');
+      task.status = taskStatus.name;
+      task.creator = getFullName(taskCreator);
+      task.executor = getFullName(taskExecutor);
+      reply.render('tasks/card', { task });
+      return reply;
+    })
     .get('/tasks/:id/edit', { name: 'editTask', preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
       task.labels = await app.objection.models.label.query();

@@ -1,0 +1,26 @@
+extends ../layouts/application.pug
+
+block header
+  h1.display-4.fw-bold.mt-4= task.name
+
+block content
+  .row.mt-5.p-5.shadow.bg-white
+    .col-12.col-md-8.order-2.order-md-1
+      .lead.fw-normal.mb-4= task.description
+    .col-12.col-md-4.border-start.px-3.order-1.order-md-2.mb-3.mb-md-0
+      .mb-2
+        span.me-1.badge.bg-danger.text-white= task.status
+        each label in task.labels
+          span.me-1.badge.bg-info.text-white= label.name
+      .d-flex.flex-wrap.mb-3
+        span.text-muted.me-2= t('views.tasks.creator')
+        span= task.creator
+      .d-flex.flex-wrap.mb-3
+        span.text-muted.me-2= t('views.tasks.executor')
+        span= task.executor
+      .d-flex.flex-wrap.mb-3
+        span.text-muted.me-2= t('views.createdAt')
+        span= formatDate(task.createdAt)
+      .d-flex.flex-wrap
+        a.btn.btn-primary.me-1(href=`/tasks/${task.id}/edit`)= t('views.edit')
+        +buttonTo(`/tasks/${task.id}`, 'delete')(class='btn btn-danger' value=t('views.delete'))
