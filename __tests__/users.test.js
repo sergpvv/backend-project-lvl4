@@ -11,27 +11,34 @@ describe('test users CRUD', () => {
   let app;
   let knex;
   let models;
+  let cookies;
+
   const testData = getTestData();
-  // console.log('!--->testData:', JSON.stringify(testData, null, '  '));
-  const signIn = async (user) => await app.inject({
+  console.log('!--->testData:', JSON.stringify(testData, null, '  '));
+
+  const signUp = (data) => app.inject({
     method: 'POST',
     url: app.reverse('createNewUser'),
-    payload: {
-      data: user,
-    },
+    payload: { data },
   });
-  const logIn = async (user) => {
+
+  const signIn = async (data) => {
     const response = await app.inject({
       method: 'POST',
       url: app.reverse('session'),
-      payload: {
-        data: user,
-      },
+      payload: { data },
     });
     const [sessionCookie] = response.cookies;
     const { name, value } = sessionCookie;
-    return { [name]: value };
+    cookies = { [name]: value };
   };
+
+  const signOut = () => app.inject({
+    method: 'DELETE',
+    url: app.reverse('session'),
+    cookies,
+  });
+
   beforeAll(async () => {
     app = fastify({
       exposeHeadRoutes: false,
@@ -48,8 +55,10 @@ describe('test users CRUD', () => {
     await knex.migrate.latest();
     await prepareData(app);
 
-    // const users = await models.user.query();
-    // console.log('!--->prepared data:', JSON.stringify(users, null, '  '));
+    const users = await models.user.query();
+    console.log('!--->prepared users:', JSON.stringify(users, null, '  '));
+    const tasks = await models.task.query();
+    console.log('!--->prepared tasks:', JSON.stringify(tasks, null, '  '));
   });
 
   beforeEach(async () => {
@@ -75,7 +84,7 @@ describe('test users CRUD', () => {
 
   it('create', async () => {
     const user = testData.users.new;
-    const response = await signIn(user);
+    const response = await signUp(user);
 
     expect(response.statusCode).toBe(302);
 
@@ -97,11 +106,11 @@ describe('test users CRUD', () => {
 
     expect(response.statusCode).toBe(302);
 
-    const cookie = await logIn(user);
+    await signIn(user);
     const responseEditUser = await app.inject({
       method: 'GET',
       url: `/users/${id}/edit`,
-      cookies: cookie,
+      cookies,
     });
 
     expect(responseEditUser.statusCode).toBe(200);
@@ -119,7 +128,7 @@ describe('test users CRUD', () => {
       body: {
         data: editedUser,
       },
-      cookies: cookie,
+      cookies,
     });
 
     expect(responsePatchUser.statusCode).toBe(200);
@@ -141,14 +150,26 @@ describe('test users CRUD', () => {
     expect(response.statusCode).toBe(302);
     expect(await models.user.query().findById(id)).toBeDefined();
 
+    await signIn(testData.users.existing);
+    const responseDeleteUserWithRelatedTask = await app.inject({
+      method: 'DELETE',
+      url: `/users/${id}`,
+      cookies,
+    });
+
+    expect(responseDeleteUserWithRelatedTask.statusCode).toBe(200);
+    expect(await models.user.query().findById(id)).toBeDefined();
+
+    await signOut();
+
     const user = testData.users.new;
+    await signUp(user);
     await signIn(user);
-    const cookie = await logIn(user);
     const { id: newId } = await models.user.query().findOne({ email: user.email });
     const responseDeleteUser = await app.inject({
       method: 'DELETE',
       url: `/users/${id}`,
-      cookies: cookie,
+      cookies,
     });
 
     expect(responseDeleteUser.statusCode).toBe(200);
@@ -157,7 +178,7 @@ describe('test users CRUD', () => {
     const responseDeleteNewUser = await app.inject({
       method: 'DELETE',
       url: `/users/${newId}`,
-      cookies: cookie,
+      cookies,
     });
     expect(responseDeleteNewUser.statusCode).toBe(200);
     expect(await models.user.query().findById(newId)).not.toBeDefined();
@@ -167,6 +188,7 @@ describe('test users CRUD', () => {
     // Пока Segmentation fault: 11
     // после каждого теста откатываем миграции
     // await knex.migrate.rollback();
+    await signOut();
   });
 
   afterAll(async () => {
