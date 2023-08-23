@@ -11,12 +11,6 @@ export default (app) => {
         const {
           id,
           name,
-          /*
-          description,
-          statusId,
-          creatorId,
-          executorId,
-        */
           createdAt,
         } = task;
         const taskStatus = await task.$relatedQuery('status');
@@ -25,14 +19,12 @@ export default (app) => {
         return ({
           id,
           name,
-          // description,
           status: taskStatus.name,
           creator: getFullName(taskCreator),
           executor: getFullName(taskExecutor),
           createdAt,
         });
       }));
-      // console.log('!--->tasks:', JSON.stringify(tasks, null, '  '));
       reply.render('tasks/index', { tasks });
       return reply;
     })
@@ -64,7 +56,7 @@ export default (app) => {
       reply.render('tasks/edit', { task });
       return reply;
     })
-    .post('/tasks', { name: 'createNewTask', preValidation: app.authenticate }, async (req, reply) => {
+    .post('/tasks', { name: 'createTask', preValidation: app.authenticate }, async (req, reply) => {
       const task = new app.objection.models.task();
       task.$set(req.body.data);
       const statusId = parseInt(task.statusId, 10);
@@ -86,22 +78,23 @@ export default (app) => {
       return reply;
     })
     .patch('/tasks/:id', { name: 'patchTask', preValidation: app.authenticate }, async (req, reply) => {
+      console.log('!----------->req.body.data:', req.body.data);
       const task = await app.objection.models.task.query().findById(req.params.id);
-      const statusId = parseInt(req.body.data.statusId, 10);
-      const executorId = parseInt(req.body.data.executorId, 10);
+      const {
+        name, description, statusId, executorId, labels,
+      } = req.body.data;
+      const editedTask = {};
+      if (name) editedTask.name = name;
+      if (description) editedTask.description = description;
+      if (statusId) editedTask.statusId = parseInt(statusId, 10);
+      if (executorId) editedTask.executorId = parseInt(executorId, 10);
+      if (labels) editedTask.labels = labels;
       try {
-        await task.$query().patch({
-          name: req.body.data.name,
-          description: req.body.data.description,
-          statusId,
-          executorId,
-        });
+        await task.$query().patch(editedTask);
         req.flash('info', i18next.t('flash.tasks.edit.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
-        const { labels, ...editedTask } = req.body.data;
         task.$set(editedTask);
-        task.$set({ statusId, executorId });
         task.statuses = await app.objection.models.taskStatus.query();
         task.users = await app.objection.models.user.query();
         task.labels = await app.objection.models.label.query();

@@ -42,6 +42,7 @@ const testData = {
     new: generateStatus(),
     existing: testStatuses[getRandom()],
   },
+  tasks: {},
 };
 
 export const getTestData = () => testData;
@@ -61,24 +62,7 @@ export const prepareData = async (app) => {
   const { name } = testData.statuses.existing;
   const status = await app.objection.models.taskStatus.query().findOne({ name });
 
-  await insert('tasks', generateTask(status.id, user.id, user.id));
-/*
-await Promise.all(_.entries({
-    users: users.map(({ password, ...properties }) => ({
-      ...properties,
-      passwordDigest: encrypt(password),
-    })),
-    statuses,
-    tasks,
-  })
-    .map(async ([table, data]) => await app.objection.knex(table).insert(data)));
-
-const { knex } = app.objection;
-  await knex('users').insert(testUsers.map((user) => ({
-    ..._.omit(user, 'password'),
-    passwordDigest: encrypt(user.password),
-  })));
-  await knex('statuses').insert(testStatuses);
-  await knex('tasks').insert(testTasks);
-  */
+  testData.tasks.new = generateTask(status.id, user.id, user.id);
+  testData.tasks.existing = generateTask(status.id, user.id, user.id);
+  await insert('tasks', testData.tasks.existing);
 };

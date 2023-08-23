@@ -104,7 +104,7 @@ describe('test users CRUD', () => {
 
   it('create', async () => {
     let response = await app.inject({
-      method: 'GET',
+      method: 'POST',
       url: app.reverse('createTaskStatus'),
     });
 
