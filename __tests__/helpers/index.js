@@ -1,7 +1,7 @@
 // @ts-check
 
 import { faker } from '@faker-js/faker';
-import _ from 'lodash';
+// import _ from 'lodash';
 import encrypt from '../../server/lib/secure.js';
 
 const length = 3; // number of test entities
@@ -33,10 +33,13 @@ const testStatuses = generateEntities(generateStatus);
 
 // const tasks = generateEntities(generateTask);
 
+const existingId = getRandom();
+
 const testData = {
   users: {
     new: generateUser(),
-    existing: testUsers[getRandom()],
+    existing: testUsers[existingId],
+    deletable: testUsers[(existingId + 1) % length],
   },
   statuses: {
     new: generateStatus(),
@@ -44,6 +47,8 @@ const testData = {
   },
   tasks: {},
 };
+
+export const userPropertyNamesSheet = Object.keys(testData.users.new).map((p) => [p]);
 
 export const getTestData = () => testData;
 

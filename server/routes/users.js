@@ -27,7 +27,7 @@ export default (app) => {
       reply.render('users/edit', { user });
       return reply;
     })
-    .post('/users', { name: 'createNewUser' }, async (req, reply) => {
+    .post('/users', async (req, reply) => {
       try {
         const validUser = await app.objection.models.user.fromJson(req.body.data);
         await app.objection.models.user.query().insert(validUser).debug();
@@ -39,22 +39,19 @@ export default (app) => {
       }
       return reply;
     })
-    .patch('/users/:id', { name: 'patchUser', preValidation: app.authenticate }, async (req, reply) => {
+    .patch('/users/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
       const currentUserId = req.session.get('userId');
       const user = await app.objection.models.user.query().findById(id);
       if (!isEqual(id, currentUserId)) {
         req.flash('error', i18next.t('flash.accessDenied'));
-        const users = await app.objection.models.user.query();
-        reply.render('users/index', { users });
+        reply.redirect(app.reverse('users'));
         return reply;
       }
       try {
-        const validUser = await app.objection.models.user.fromJson(req.body.data);
-        await user.$query().patch(validUser);
+        await user.$query().patch(req.body.data);
         req.flash('info', i18next.t('flash.users.edit.success'));
-        const users = await app.objection.models.user.query();
-        reply.render('users/index', { users });
+        reply.redirect(app.reverse('users'));
       } catch ({ data }) {
         user.$set(req.body.data);
         req.flash('error', i18next.t('flash.users.edit.error'));
@@ -62,35 +59,29 @@ export default (app) => {
       }
       return reply;
     })
-    .delete('/users/:id', { name: 'deleteUser', preValidation: app.authenticate }, async (req, reply) => {
+    .delete('/users/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
       const currentUserId = req.session.get('userId');
       if (!isEqual(id, currentUserId)) {
         req.flash('error', i18next.t('flash.accessDenied'));
-        const users = await app.objection.models.user.query();
-        reply.render('users/index', { users });
+        reply.redirect(app.reverse('users'));
         return reply;
       }
       const relatedTasks = await app.objection.models.task.query()
         .where('creatorId', id).orWhere('executorId', id);
       if (relatedTasks?.length > 0) {
         req.flash('error', i18next.t('flash.users.delete.error'));
-        const users = await app.objection.models.user.query();
-        reply.render('users/index', { users });
+        reply.redirect(app.reverse('users'));
         return reply;
       }
       try {
         req.logOut();
-        const userInstance = await app.objection.models.user.query().findById(id);
-        await userInstance.$query().delete();
+        await app.objection.models.user.query().findById(id).delete();
         req.flash('info', i18next.t('flash.users.delete.success'));
-        const users = await app.objection.models.user.query();
-        reply.render('users/index', { users });
-      } catch ({ data }) {
+      } catch (_e) {
         req.flash('error', i18next.t('flash.users.delete.error'));
-        const users = await app.objection.models.user.query();
-        reply.render('users/index', { users, errors: data });
       }
+      reply.redirect(app.reverse('users'));
       return reply;
     });
 };
