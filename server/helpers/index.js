@@ -3,6 +3,8 @@
 import i18next from 'i18next';
 import _ from 'lodash';
 
+export const getFullName = ({ firstName, lastName }) => `${firstName} ${lastName}`;
+
 export default (app) => ({
   route(name) {
     return app.reverse(name);
@@ -29,4 +31,14 @@ export default (app) => ({
     const date = new Date(str);
     return date.toLocaleString();
   },
+  fn(user) {
+    return getFullName(user);
+  },
 });
+
+const isId = (id) => (typeof id === 'number') || (typeof id === 'string');
+
+export const isEqual = (firstId = null, secondId = null) => {
+  if (!isId(firstId) || !isId(secondId)) return null;
+  return Number(firstId) === Number(secondId);
+};

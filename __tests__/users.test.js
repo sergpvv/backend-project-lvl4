@@ -62,12 +62,13 @@ describe('test users CRUD', () => {
     findBy = (property) => models.user.query().findOne(property);
 
     findByEmail = (email) => findBy({ email });
-
+/*
     console.log('!--->testData:', JSON.stringify(testData, null, '  '));
     const users = await models.user.query();
     console.log('!--->prepared users:', JSON.stringify(users, null, '  '));
     const tasks = await models.task.query();
     console.log('!--->prepared tasks:', JSON.stringify(tasks, null, '  '));
+*/
   });
 
   it('index', async () => {

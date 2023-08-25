@@ -1,28 +1,19 @@
 import i18next from 'i18next';
-import isEqual from '../helpers/isEqual.js';
-
-const getFullName = ({ firstName, lastName }) => `${firstName} ${lastName}`;
+import { isEqual } from '../helpers/index.js';
 
 export default (app) => {
   app
     .get('/tasks', { name: 'tasks', preValidation: app.authenticate }, async (req, reply) => {
       const taskList = await app.objection.models.task.query();
       const tasks = await Promise.all(taskList.map(async (task) => {
-        const {
-          id,
-          name,
-          createdAt,
-        } = task;
-        const taskStatus = await task.$relatedQuery('status');
-        const taskCreator = await task.$relatedQuery('creator');
-        const taskExecutor = await task.$relatedQuery('executor');
+        const { name: status } = await task.$relatedQuery('status');
+        const creator = await task.$relatedQuery('creator');
+        const executor = await task.$relatedQuery('executor');
         return ({
-          id,
-          name,
-          status: taskStatus.name,
-          creator: getFullName(taskCreator),
-          executor: getFullName(taskExecutor),
-          createdAt,
+          ...task,
+          status,
+          creator,
+          executor,
         });
       }));
       reply.render('tasks/index', { tasks });
@@ -37,14 +28,18 @@ export default (app) => {
       return reply;
     })
     .get('/tasks/:id', { name: 'taskCard', preValidation: app.authenticate }, async (req, reply) => {
-      const task = await app.objection.models.task.query().findById(req.params.id);
-      task.labels = await app.objection.models.label.query();
-      const taskStatus = await task.$relatedQuery('status');
-      const taskCreator = await task.$relatedQuery('creator');
-      const taskExecutor = await task.$relatedQuery('executor');
-      task.status = taskStatus.name;
-      task.creator = getFullName(taskCreator);
-      task.executor = getFullName(taskExecutor);
+      const taskData = await app.objection.models.task.query().findById(req.params.id);
+      const labels = await app.objection.models.label.query();
+      const { name: status } = await taskData.$relatedQuery('status');
+      const creator = await taskData.$relatedQuery('creator');
+      const executor = await taskData.$relatedQuery('executor');
+      const task = {
+        ...taskData,
+        labels,
+        status,
+        creator,
+        executor,
+      };
       reply.render('tasks/card', { task });
       return reply;
     })

@@ -23,8 +23,8 @@ block content
             td
               a(href=`/tasks/${task.id}`)= task.name
             td= task.status
-            td= task.creator
-            td= task.executor
+            td= fn(task.creator)
+            td= fn(task.executor)
             td= formatDate(task.createdAt)
             td
               .d-flex

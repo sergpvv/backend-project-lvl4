@@ -8,8 +8,7 @@ block content
     thead
       tr
         th= t('views.id')
-        th= t('views.users.firstName')
-        th= t('views.users.lastName')
+        th= t('views.users.fullName')
         th= t('views.users.email')
         th= t('views.createdAt')
         th= t('views.actions')
@@ -17,8 +16,7 @@ block content
       each user in users
         tr
           td= user.id
-          td= user.firstName
-          td= user.lastName
+          td= fn(user)
           td= user.email
           td= formatDate(user.createdAt)
           td

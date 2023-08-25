@@ -101,6 +101,7 @@ export default {
       users: {
         firstName: 'Имя',
         lastName: 'Фамилия',
+        fullName: 'Полное имя',
         email: 'Email',
         password: 'Пароль',
         editing: 'Изменение пользователя',

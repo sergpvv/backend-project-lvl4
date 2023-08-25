@@ -14,10 +14,10 @@ block content
           span.me-1.badge.bg-info.text-white= label.name
       .d-flex.flex-wrap.mb-3
         span.text-muted.me-2= t('views.tasks.creator')
-        span= task.creator
+        span= fn(task.creator)
       .d-flex.flex-wrap.mb-3
         span.text-muted.me-2= t('views.tasks.executor')
-        span= task.executor
+        span= fn(task.executor)
       .d-flex.flex-wrap.mb-3
         span.text-muted.me-2= t('views.createdAt')
         span= formatDate(task.createdAt)
