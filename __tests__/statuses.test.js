@@ -5,49 +5,19 @@ import fastify from 'fastify';
 import init from '../server/plugin.js';
 import { getTestData, prepareData } from './helpers/index.js';
 
-describe('test users CRUD', () => {
+describe('test statuses CRUD', () => {
   let app;
   let knex;
   let models;
   let cookie;
-
-  const testData = getTestData();
-
-  const signIn = async () => {
-    const response = await app.inject({
-      method: 'POST',
-      url: app.reverse('session'),
-      payload: {
-        data: testData.users.existing,
-      },
-    });
-    const [sessionCookie] = response.cookies;
-    const { name, value } = sessionCookie;
-    cookie = { [name]: value };
-  };
-
-  const signOut = async () => {
-    await app.inject({
-      method: 'DELETE',
-      url: app.reverse('session'),
-      cookies: cookie,
-    });
-  };
-
-  const getName = async (id) => {
-    const { name } = await models.taskStatus.query().findById(id);
-    return name;
-  };
-
-  const findByName = async (name) => {
-    const taskStatus = await models.taskStatus.query().findOne({ name });
-    return taskStatus;
-  };
-
-  const findById = async (id) => {
-    const taskStatus = await models.taskStatus.query().findById(id);
-    return taskStatus;
-  };
+  let testData;
+  let makeRequest;
+  let signIn;
+  let makeAuthedRequest;
+  let signOut;
+  let findById;
+  let findBy;
+  let findByName;
 
   beforeAll(async () => {
     app = fastify({
@@ -59,199 +29,112 @@ describe('test users CRUD', () => {
     models = app.objection.models;
     await knex.migrate.latest();
     await prepareData(app);
-  });
+    testData = getTestData();
 
-  beforeEach(async () => {
+    makeRequest = (method = 'get', url = 'statuses', data = null, cookies = null) => {
+      const options = {
+        method,
+        url: url.startsWith('/') ? url : app.reverse(url),
+      };
+      if (data) options.payload = { data };
+      if (cookies) options.cookies = cookies;
+      return app.inject(options);
+    };
+
+    signIn = async (user = null) => {
+      const response = await makeRequest('post', 'session', user ?? testData.users.existing);
+      const [sessionCookie] = response.cookies;
+      const { name, value } = sessionCookie;
+      cookie = { [name]: value };
+    };
+
+    makeAuthedRequest = (method, url, data = null) => makeRequest(method, url, data, cookie);
+
+    signOut = () => makeAuthedRequest('delete', 'session');
+
+    findById = (id) => models.taskStatus.query().findById(id);
+
+    findBy = (property) => models.taskStatus.query().findOne(property);
+
+    findByName = (name) => models.taskStatus.query().findOne({ name });
   });
 
   it('index', async () => {
-    let response = await app.inject({
-      method: 'GET',
-      url: app.reverse('statuses'),
-    });
-
+    let response = await makeRequest();
     expect(response.statusCode).toBe(302);
 
     await signIn();
-
-    response = await app.inject({
-      method: 'GET',
-      url: app.reverse('statuses'),
-      cookies: cookie,
-    });
-
+    response = await makeAuthedRequest();
     expect(response.statusCode).toBe(200);
   });
 
   it('new', async () => {
-    let response = await app.inject({
-      method: 'GET',
-      url: app.reverse('newTaskStatus'),
-    });
-
+    let response = await makeRequest('get', 'newTaskStatus');
     expect(response.statusCode).toBe(302);
 
     await signIn();
-
-    response = await app.inject({
-      method: 'GET',
-      url: app.reverse('newTaskStatus'),
-      cookies: cookie,
-    });
-
+    response = await makeAuthedRequest('get', 'newTaskStatus');
     expect(response.statusCode).toBe(200);
   });
 
   it('create', async () => {
-    let response = await app.inject({
-      method: 'POST',
-      url: app.reverse('createTaskStatus'),
-    });
-
+    const newTaskStatus = testData.statuses.new;
+    let response = await makeRequest('post', 'createTaskStatus', newTaskStatus);
     expect(response.statusCode).toBe(302);
-
-    response = await app.inject({
-      method: 'POST',
-      url: app.reverse('createTaskStatus'),
-      body: {
-        data: {
-          name: 'a',
-        },
-      },
-    });
-
-    expect(response.statusCode).toBe(302);
-    expect(await findByName('a')).not.toBeDefined();
+    expect(await findBy(newTaskStatus)).not.toBeDefined();
 
     await signIn();
-
-    response = await app.inject({
-      method: 'POST',
-      url: app.reverse('createTaskStatus'),
-      body: {
-        data: {
-          name: '',
-        },
-      },
-      cookies: cookie,
-    });
-
+    response = await makeAuthedRequest('post', 'createTaskStatus', { name: '' });
     expect(response.statusCode).toBe(200);
     expect(await findByName('')).not.toBeDefined();
 
-    response = await app.inject({
-      method: 'POST',
-      url: app.reverse('createTaskStatus'),
-      body: {
-        data: {
-          name: 'a',
-        },
-      },
-      cookies: cookie,
-    });
-
+    response = await makeAuthedRequest('post', 'createTaskStatus', newTaskStatus);
     expect(response.statusCode).toBe(302);
-    expect(await findByName('a')).toBeDefined();
+    const createdTaskStatus = await findBy(newTaskStatus);
+    expect(createdTaskStatus).toMatchObject(newTaskStatus);
   });
 
   it('edit', async () => {
-    await signIn();
-    await app.inject({
-      method: 'POST',
-      url: app.reverse('createTaskStatus'),
-      body: {
-        data: {
-          name: 'b',
-        },
-      },
-      cookies: cookie,
-    });
-
-    const { id } = await findByName('b');
-
-    await signOut();
-
-    let response = await app.inject({
-      method: 'PATCH',
-      url: `/statuses/${id}`,
-      body: {
-        data: {
-          name: 'c',
-        },
-      },
-    });
-
-    expect(response.statusCode).toBe(302);
-    expect(await getName(id)).toBe('b');
-
-    response = await app.inject({
-      method: 'GET',
-      url: `/statuses/${id}/edit`,
-    });
-
+    const taskStatus = testData.statuses.existing;
+    const id = testData.statuses.existingId;
+    const urlEdit = `/statuses/${id}/edit`;
+    let response = await makeRequest('get', urlEdit);
     expect(response.statusCode).toBe(302);
 
+    const editedTaskStatus = testData.statuses.editing;
+    const urlPatch = `/statuses/${id}`;
+    response = await makeRequest('patch', urlPatch, editedTaskStatus);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(id)).toMatchObject(taskStatus);
+
     await signIn();
-
-    response = await app.inject({
-      method: 'GET',
-      url: `/statuses/${id}/edit`,
-      cookies: cookie,
-    });
-
+    response = await makeAuthedRequest('get', urlEdit);
     expect(response.statusCode).toBe(200);
 
-    response = await app.inject({
-      method: 'PATCH',
-      url: `/statuses/${id}`,
-      body: {
-        data: {
-          name: 'c',
-        },
-      },
-      cookies: cookie,
-    });
-
+    response = await makeAuthedRequest('patch', urlPatch, { name: '' });
     expect(response.statusCode).toBe(200);
-    expect(await getName(id)).toBe('c');
+    expect(await findById(id)).toMatchObject(taskStatus);
+
+    response = await makeAuthedRequest('patch', urlPatch, editedTaskStatus);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(id)).toMatchObject(editedTaskStatus);
   });
 
   it('delete', async () => {
-    await signIn();
-
-    await app.inject({
-      method: 'POST',
-      url: app.reverse('createTaskStatus'),
-      body: {
-        data: {
-          name: 'd',
-        },
-      },
-      cookies: cookie,
-    });
-
-    const { id } = await findByName('d');
-
-    await signOut();
-
-    let response = await app.inject({
-      method: 'DELETE',
-      url: `/statuses/${id}`,
-    });
-
+    const { id } = await findBy(testData.statuses.deletable);
+    let response = await makeRequest('delete', `/statuses/${id}`);
     expect(response.statusCode).toBe(302);
     expect(await findById(id)).toBeDefined();
 
     await signIn();
-
-    response = await app.inject({
-      method: 'DELETE',
-      url: `/statuses/${id}`,
-      cookies: cookie,
-    });
-
-    expect(response.statusCode).toBe(200);
+    response = await makeAuthedRequest('delete', `/statuses/${id}`);
+    expect(response.statusCode).toBe(302);
     expect(await findById(id)).not.toBeDefined();
+
+    const { existingId } = testData.statuses;
+    response = await makeAuthedRequest('delete', `/statuses/${existingId}`);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(existingId)).toBeDefined();
   });
 
   afterEach(async () => {

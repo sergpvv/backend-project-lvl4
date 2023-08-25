@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 // import _ from 'lodash';
 import encrypt from '../../server/lib/secure.js';
 
-const length = 3; // number of test entities
+const length = 2; // number of test entities
 
 export const getRandom = () => Math.floor(Math.random() * length);
 
@@ -35,15 +35,20 @@ const testStatuses = generateEntities(generateStatus);
 
 const existingId = getRandom();
 
+const getDeletable = (testEntities) => testEntities[(existingId + 1) % length];
+
 const testData = {
   users: {
     new: generateUser(),
+    editing: generateUser(),
     existing: testUsers[existingId],
-    deletable: testUsers[(existingId + 1) % length],
+    deletable: getDeletable(testUsers),
   },
   statuses: {
     new: generateStatus(),
-    existing: testStatuses[getRandom()],
+    editing: generateStatus(),
+    existing: testStatuses[existingId],
+    deletable: getDeletable(testStatuses),
   },
   tasks: {},
 };
@@ -62,10 +67,12 @@ export const prepareData = async (app) => {
 
   const { email } = testData.users.existing;
   const user = await app.objection.models.user.query().findOne({ email });
+  testData.users.existingId = user.id;
 
   await insert('statuses', testStatuses);
   const { name } = testData.statuses.existing;
   const status = await app.objection.models.taskStatus.query().findOne({ name });
+  testData.statuses.existingId = status.id;
 
   testData.tasks.new = generateTask(status.id, user.id, user.id);
   testData.tasks.existing = generateTask(status.id, user.id, user.id);
