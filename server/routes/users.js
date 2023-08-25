@@ -34,7 +34,7 @@ export default (app) => {
         reply.redirect(app.reverse('root'));
       } catch ({ data: errors }) {
         req.flash('error', i18next.t('flash.users.create.error'));
-        reply.render('users/new', { user, errors });
+        reply.code(422).render('users/new', { user, errors });
       }
       return reply;
     })
@@ -48,13 +48,14 @@ export default (app) => {
       const { data: editedUser } = req.body;
       const user = await app.objection.models.user.query().findById(id);
       try {
-        await user.$query().patch(editedUser);
+        const validUser = await app.objection.models.user.fromJson(editedUser);
+        await user.$query().patch(validUser);
         req.flash('info', i18next.t('flash.users.edit.success'));
         reply.redirect(app.reverse('users'));
       } catch ({ data: errors }) {
         user.$set(editedUser);
         req.flash('error', i18next.t('flash.users.edit.error'));
-        reply.render('users/edit', { user, errors });
+        reply.code(422).render('users/edit', { user, errors });
       }
       return reply;
     })

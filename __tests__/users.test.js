@@ -5,7 +5,9 @@ import fastify from 'fastify';
 
 import init from '../server/plugin.js';
 import encrypt from '../server/lib/secure.js';
-import { getTestData, prepareData, userPropertyNamesSheet } from './helpers/index.js';
+import {
+  getTestData, prepareData, userPropertySheet, userPropertySheetExceptPassword,
+} from './helpers/index.js';
 
 describe('test users CRUD', () => {
   let app;
@@ -62,13 +64,6 @@ describe('test users CRUD', () => {
     findBy = (property) => models.user.query().findOne(property);
 
     findByEmail = (email) => findBy({ email });
-/*
-    console.log('!--->testData:', JSON.stringify(testData, null, '  '));
-    const users = await models.user.query();
-    console.log('!--->prepared users:', JSON.stringify(users, null, '  '));
-    const tasks = await models.task.query();
-    console.log('!--->prepared tasks:', JSON.stringify(tasks, null, '  '));
-*/
   });
 
   it('index', async () => {
@@ -81,12 +76,17 @@ describe('test users CRUD', () => {
     expect(response.statusCode).toBe(200);
   });
 
-  it.each(userPropertyNamesSheet)('create user: incorrect %s', async (propertyName) => {
-    const property = { [propertyName]: '' };
-    const user = { ...testData.users.new, ...property };
+  it.each(userPropertySheet)('create user: incorrect %s', async (propertyName) => {
+    const user = { ...testData.users.new, [propertyName]: '' };
     const response = await signUp(user);
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(422);
     expect(await findByEmail(user.email)).not.toBeDefined();
+  });
+
+  it('create user: existing email', async () => {
+    const user = { ...testData.users.new, email: testData.users.existing.email };
+    const response = await signUp(user);
+    expect(response.statusCode).toBe(422);
   });
 
   it('create correct user', async () => {
@@ -101,8 +101,7 @@ describe('test users CRUD', () => {
   });
 
   it('edit page', async () => {
-    const { email } = testData.users.existing;
-    const { id } = await findBy({ email });
+    const id = testData.users.existingId;
     const url = `/users/${id}/edit`;
     let response = await makeRequest('get', url);
     expect(response.statusCode).toBe(302);
@@ -112,32 +111,62 @@ describe('test users CRUD', () => {
     expect(response.statusCode).toBe(200);
   });
 
-  it.each(userPropertyNamesSheet)('edit user: %s', async (propertyName) => {
+  it.each(userPropertySheetExceptPassword)('edit user: %s', async (propertyName) => {
     const user = testData.users.existing;
-    const { id } = await findByEmail(user.email);
+    const id = testData.users.existingId;
     const url = `/users/${id}`;
-    const newUser = testData.users.new;
-    const property = { [propertyName]: newUser[propertyName] };
+    const toEditUser = testData.users.editing;
+    const userPropertyValue = _.get(user, propertyName);
 
-    let response = await makeRequest('patch', url, property);
+    let response = await makeRequest('patch', url, toEditUser);
     expect(response.statusCode).toBe(302);
     let patchedUser = await findById(id);
-    const getExpected = (value) => (propertyName === 'password' ? encrypt(value) : value);
-    const getPropertyValue = () => (propertyName === 'password'
-      ? patchedUser.passwordDigest
-      : patchedUser[propertyName]);
-    expect(getPropertyValue()).toBe(getExpected(user[propertyName]));
+    expect(_.get(patchedUser, propertyName)).toBe(userPropertyValue);
 
     await signIn();
-    response = await makeAuthedRequest('patch', url, { [propertyName]: '' });
-    expect(response.statusCode).toBe(200);
+    response = await makeAuthedRequest('patch', url, { ...user, [propertyName]: '' });
+    expect(response.statusCode).toBe(422);
     patchedUser = await findById(id);
-    expect(getPropertyValue()).toBe(getExpected(user[propertyName]));
-
-    response = await makeAuthedRequest('patch', url, property);
+    expect(_.get(patchedUser, propertyName)).toBe(userPropertyValue);
+    response = await makeAuthedRequest('patch', url, {
+      ...user,
+      [propertyName]: _.get(toEditUser, propertyName),
+    });
     expect(response.statusCode).toBe(302);
     patchedUser = await findById(id);
-    expect(getPropertyValue()).toBe(getExpected(newUser[propertyName]));
+    expect(_.get(patchedUser, propertyName)).toBe(_.get(toEditUser, propertyName));
+  });
+
+  it('edit user: password', async () => {
+    const user = testData.users.existing;
+    const { password } = user;
+    const passwordDigest = encrypt(password);
+    const id = testData.users.existingId;
+    const url = `/users/${id}`;
+    const toEditUser = {
+      ...testData.users.editing,
+      password,
+    };
+
+    let response = await makeRequest('patch', url, toEditUser);
+    expect(response.statusCode).toBe(302);
+    let patchedUser = await findById(id);
+    expect(_.get(patchedUser, 'passwordDigest')).toBe(passwordDigest);
+
+    response = await makeAuthedRequest('patch', url, { ...user, passowrd: '' });
+    expect(response.statusCode).toBe(422);
+    patchedUser = await findById(id);
+    expect(_.get(patchedUser, 'passwordDigest')).toBe(passwordDigest);
+
+    response = await makeAuthedRequest('patch', url, { ...user, passowrd: '42' });
+    expect(response.statusCode).toBe(422);
+    patchedUser = await findById(id);
+    expect(_.get(patchedUser, 'passwordDigest')).toBe(passwordDigest);
+
+    response = await makeAuthedRequest('patch', url, toEditUser);
+    expect(response.statusCode).toBe(302);
+    patchedUser = await findById(id);
+    expect(_.get(patchedUser, 'passwordDigest')).toBe(encrypt(toEditUser.password));
   });
 
   it('delete', async () => {
@@ -154,7 +183,7 @@ describe('test users CRUD', () => {
     expect(response.statusCode).toBe(302);
     expect(await findById(id)).toBeDefined();
 
-    const { id: existingId } = await findByEmail(testData.users.existing.email);
+    const { existingId } = testData.users;
     response = await makeAuthedRequest('delete', `/users/${existingId}`);
     expect(response.statusCode).toBe(302);
     expect(await findById(existingId)).toBeDefined();

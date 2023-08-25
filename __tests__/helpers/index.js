@@ -1,7 +1,7 @@
 // @ts-check
 
 import { faker } from '@faker-js/faker';
-// import _ from 'lodash';
+import _ from 'lodash';
 import encrypt from '../../server/lib/secure.js';
 
 const length = 2; // number of test entities
@@ -53,7 +53,13 @@ const testData = {
   tasks: {},
 };
 
-export const userPropertyNamesSheet = Object.keys(testData.users.new).map((p) => [p]);
+export const isPassword = (propertyName) => propertyName === 'password';
+
+export const userPropertyNames = _.keys(testData.users.new);
+
+export const userPropertySheet = _.chunk(userPropertyNames);
+
+export const userPropertySheetExceptPassword = _.chunk(_.reject(userPropertyNames, isPassword));
 
 export const getTestData = () => testData;
 
