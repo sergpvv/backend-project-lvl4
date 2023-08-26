@@ -1,7 +1,7 @@
-extends ../layouts/application.pug
+extends ../layouts/application
 
-block header
-  h1.display-4.fw-bold.mt-4= t('layouts.application.signUp')
+block prepend header
+  - entity = 'signUp'
 
 block content
   .d-flex.align-items-center.justify-content-center

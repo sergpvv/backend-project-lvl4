@@ -1,0 +1,4 @@
+extends ../layouts/table
+
+block append header
+  a.btn.btn-success(href=`/${entity}/new`)= t(`views.${entity}.create`)

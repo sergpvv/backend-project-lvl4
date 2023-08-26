@@ -1,32 +1,59 @@
-extends ../layouts/application.pug
+extends ../layouts/index
 
-block header
-  h1.display-4.fw-bold.mt-4= t('layouts.application.tasks')
+block prepend header
+  - entity = 'tasks'
 
-block content
-  a.btn.btn-success(href="/tasks/new")= t('views.tasks.create')
-  .table-responsive
-    table.table.table-borderless.table-striped.mt-5.bg-white
-      thead
-        tr
-          th= t('views.id')
-          th= t('views.name')
-          th= t('views.tasks.status')
-          th= t('views.tasks.creator')
-          th= t('views.tasks.executor')
-          th= t('views.createdAt')
-          th= t('views.actions')
-      tbody
-        each task in tasks
-          tr
-            td= task.id
-            td
-              a(href=`/tasks/${task.id}`)= task.name
-            td= task.status
-            td= fn(task.creator)
-            td= fn(task.executor)
-            td= formatDate(task.createdAt)
-            td
-              .d-flex
-                a.btn.btn-primary.me-1(href=`/tasks/${task.id}/edit`)= t('views.edit')
-                +buttonTo(`/tasks/${task.id}`, 'delete')(class='btn btn-danger' value=t('views.delete'))
+block prepend content
+  .card.shadow-sm
+    .card-body.p-4
+      form(action='/tasks' method='get')
+        .row
+          .col-12.col-md
+            .input-group.mb-3
+              label.input-group-text(for='data_status')
+              select#data_status.form-select(name='status')
+                option
+                each taskStatus in statuses
+                  option(value=taskStatus.id)= taskStatus.name
+          .col-12.col-md
+            .input-group.mb-3
+              label.input-group-text(for='data_executor')
+              select#data_executor.form-select(name='executor')
+                option
+                option(value='1') qwe qwe
+          .col-12.col-md
+            .input-group.mb-3
+              label.input-group-text(for='data_label')
+              select#data_label.form-select(name='label')
+                option
+                option(value='1') q
+        .mb-3.form-check
+          input#data_isCreatorUser.form-check-input(type='checkbox' name='isCreatorUser')
+          label.form-check-label(for='data_isCreatorUser')
+        input.btn.btn-primary(type='submit' value='Показать')
+
+
+block table
+  thead
+    tr
+      th= t('views.id')
+      th= t('views.name')
+      th= t('views.tasks.status')
+      th= t('views.tasks.creator')
+      th= t('views.tasks.executor')
+      th= t('views.createdAt')
+      th= t('views.actions')
+  tbody
+    each task in tasks
+      tr
+        td= task.id
+        td
+          a(href=`/tasks/${task.id}`)= task.name
+        td= task.status
+        td= fn(task.creator)
+        td= fn(task.executor)
+        td= formatDate(task.createdAt)
+        td
+          .d-flex
+            a.btn.btn-primary.me-1(href=`/tasks/${task.id}/edit`)= t('views.edit')
+            +buttonTo(`/tasks/${task.id}`, 'delete')(class='btn btn-danger' value=t('views.delete'))
