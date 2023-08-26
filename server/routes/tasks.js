@@ -53,48 +53,57 @@ export default (app) => {
     })
     .post('/tasks', { name: 'createTask', preValidation: app.authenticate }, async (req, reply) => {
       const task = new app.objection.models.task();
-      task.$set(req.body.data);
-      const statusId = parseInt(task.statusId, 10);
-      const executorId = parseInt(task.executorId, 10);
-      const creatorId = parseInt(req.session.get('userId'), 10);
-      task.$set({ statusId, creatorId, executorId });
+      const {
+        name, description, statusId, executorId,
+      } = req.body.data;
+      const newTaskData = {
+        name,
+        description,
+        statusId: statusId?.length > 0 ? Number(statusId) : 0,
+        executorId: executorId?.length > 0 ? executorId : null,
+        creatorId: Number(req.session.get('userId')),
+      };
+      // console.log('!----------->newTaskData', newTaskData);
       try {
-        const { labels, ...newTask } = task;
-        await app.objection.models.task.query().insert(newTask);
+        await app.objection.models.task.query().insert(newTaskData).debug();
         req.flash('info', i18next.t('flash.tasks.create.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
+        task.$set(req.body.data);
         task.labels = await app.objection.models.label.query();
         task.statuses = await app.objection.models.taskStatus.query();
         task.users = await app.objection.models.user.query();
         req.flash('error', i18next.t('flash.tasks.create.error'));
-        reply.render('tasks/new', { task, errors: data });
+        reply.code(422).render('tasks/new', { task, errors: data });
       }
       return reply;
     })
     .patch('/tasks/:id', { name: 'patchTask', preValidation: app.authenticate }, async (req, reply) => {
-      console.log('!----------->req.body.data:', req.body.data);
+      // console.log('!----------->req.body.data:', req.body.data);
       const task = await app.objection.models.task.query().findById(req.params.id);
       const {
-        name, description, statusId, executorId, labels,
+        name, description, statusId, executorId,
       } = req.body.data;
-      const editedTask = {};
-      if (name) editedTask.name = name;
-      if (description) editedTask.description = description;
-      if (statusId) editedTask.statusId = parseInt(statusId, 10);
-      if (executorId) editedTask.executorId = parseInt(executorId, 10);
-      if (labels) editedTask.labels = labels;
+      const newTaskData = {
+        name,
+        description,
+        statusId: statusId?.length > 0 ? Number(statusId) : 0,
+        executorId: executorId?.length > 0 ? executorId : null,
+      };
+      console.log('!----------->newTaskData', newTaskData);
       try {
-        await task.$query().patch(editedTask);
+        // const validTask = await app.objection.models.task.fromJson(newTaskData).debug();
+        // await task.$query().patch(validTask).debug();
+        await task.$query().update(newTaskData).debug();
         req.flash('info', i18next.t('flash.tasks.edit.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
-        task.$set(editedTask);
+        task.$set(req.body.data);
         task.statuses = await app.objection.models.taskStatus.query();
         task.users = await app.objection.models.user.query();
         task.labels = await app.objection.models.label.query();
         req.flash('error', i18next.t('flash.tasks.edit.error'));
-        reply.render('tasks/edit', { task, errors: data });
+        reply.code(422).render('tasks/edit', { task, errors: data });
       }
       return reply;
     })

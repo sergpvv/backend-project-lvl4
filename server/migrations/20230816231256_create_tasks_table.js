@@ -21,7 +21,8 @@ export const up = (knex) => (
       .integer('executor_id')
       .unsigned()
       .references('id')
-      .inTable('users');
+      .inTable('users')
+      .nullable();
     table
       .timestamp('created_at')
       .defaultTo(knex.fn.now());

@@ -9,5 +9,5 @@ block content
     +input(task, 'description', errors, t('views.tasks.description'), 'textarea')(row='3')
     +input(task, 'statusId', errors, t('views.tasks.status'), 'select', 'statuses')
     +input(task, 'executorId', errors, t('views.tasks.executor'), 'select', 'users')
-            +input(task, 'labels', errors, t('views.tasks.labels'), 'select', 'labels')(multiple='multiple')
+    +input(task, 'labels', errors, t('views.tasks.labels'), 'select', 'labels')(multiple='multiple')
     +buttonTo(`/tasks/${task.id}`, 'patch')(class='btn btn-success' value=t('views.edit'))

@@ -3,7 +3,11 @@
 import i18next from 'i18next';
 import _ from 'lodash';
 
-export const getFullName = ({ firstName, lastName }) => `${firstName} ${lastName}`;
+export const getFullName = (user) => {
+  if (!user) return '';
+  const { firstName, lastName } = user;
+  return `${firstName} ${lastName}`;
+};
 
 export default (app) => ({
   route(name) {
