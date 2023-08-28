@@ -125,6 +125,7 @@ export default {
         creation: 'Создание задачи',
         editing: 'Изменение задачи',
         label: 'Метка',
+        labels: 'Метки',
         myTasksOnly: 'Только мои задачи',
         show: 'Показать',
         accessDenied: 'Задачу может удалить только её автор',

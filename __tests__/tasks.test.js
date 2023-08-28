@@ -7,13 +7,14 @@ describe('test tasks CRUD', () => {
   let app;
   let knex;
   let models;
-  let cookies;
+  let cookie;
   let testData;
   let makeRequest;
   let signIn;
   let makeAuthedRequest;
   let findByName;
   let findById;
+  let findBy;
 
   beforeAll(async () => {
     app = fastify({
@@ -27,28 +28,28 @@ describe('test tasks CRUD', () => {
     await prepareData(app);
     testData = getTestData();
 
-    makeRequest = (method = 'get', url = '/tasks', data = null) => app.inject({
-      method,
-      url: url.startsWith('/') ? url : app.reverse(url),
-      payload: { data },
-    });
-
-    signIn = async () => {
-      const response = await makeRequest('post', '/session', testData.users.existing);
-      const [sessionCookie] = response.cookies;
-      const { name, value } = sessionCookie;
-      cookies = { [name]: value };
+    makeRequest = (method = 'get', url = 'tasks', data = null, cookies = null) => {
+      const options = {
+        method,
+        url: url.startsWith('/') ? url : app.reverse(url),
+      };
+      if (data) options.payload = { data };
+      if (cookies) options.cookies = cookies;
+      return app.inject(options);
     };
 
-    makeAuthedRequest = (method = 'get', url = '/tasks', data = null) => app.inject({
-      method,
-      url: url.startsWith('/') ? url : app.reverse(url),
-      payload: { data },
-      //  body: { data },
-      cookies,
-    });
+    signIn = async (user = null) => {
+      const response = await makeRequest('post', '/session', user ?? testData.users.existing);
+      const [sessionCookie] = response.cookies;
+      const { name, value } = sessionCookie;
+      cookie = { [name]: value };
+    };
 
-    findByName = (name) => models.task.query().findOne({ name });
+    makeAuthedRequest = (method, url, data = null) => makeRequest(method, url, data, cookie);
+
+    findBy = (property) => models.task.query().findOne(property);
+
+    findByName = (name) => findBy({ name });
 
     findById = (id) => models.task.query().findById(id);
   });
@@ -73,24 +74,20 @@ describe('test tasks CRUD', () => {
 
   it('create', async () => {
     const task = testData.tasks.new;
-    let response = await makeRequest('post', 'createTask', task);
+    const { name } = testData.tasks.new;
+    let response = await makeRequest('post', 'tasks', task);
     expect(response.statusCode).toBe(302);
-    const { name, ...properties } = task;
-    expect(await findByName(name)).not.toBeDefined();
+    expect(await findBy({ name })).not.toBeDefined();
 
     await signIn();
-    response = await makeAuthedRequest('post', 'createTask', testData.tasks.exist);
+    response = await makeAuthedRequest('post', 'tasks', testData.tasks.exist);
     expect(response.statusCode).toBe(200);
 
-    const incorrectTask = {
-      name: '',
-      ...properties,
-    };
-    response = await makeAuthedRequest('post', 'createTask', incorrectTask);
-    expect(response.statusCode).toBe(200);
+    response = await makeAuthedRequest('post', 'tasks', { ...task, name: '' });
+    expect(response.statusCode).toBe(422);
     expect(await findByName('')).not.toBeDefined();
 
-    response = await makeAuthedRequest('post', 'createTask', task);
+    response = await makeAuthedRequest('post', 'tasks', task);
     expect(response.statusCode).toBe(302);
     const { description } = await findByName(name);
     expect(description).toBe(task.description);
@@ -107,7 +104,7 @@ describe('test tasks CRUD', () => {
     expect(response.statusCode).toBe(200);
 
     response = await makeAuthedRequest('patch', `/tasks/${id}`, { name: '' });
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(422);
     const expected = await findById(id);
     expect(task.name).toBe(expected.name);
 

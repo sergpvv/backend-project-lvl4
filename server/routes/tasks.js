@@ -32,7 +32,7 @@ export default (app) => {
       reply.render('tasks/new', { task });
       return reply;
     })
-    .get('/tasks/:id', { name: 'taskCard', preValidation: app.authenticate }, async (req, reply) => {
+    .get('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const taskData = await app.objection.models.task.query().findById(req.params.id);
       const labels = await app.objection.models.label.query();
       const { name: status } = await taskData.$relatedQuery('status');
@@ -48,7 +48,7 @@ export default (app) => {
       reply.render('tasks/card', { task });
       return reply;
     })
-    .get('/tasks/:id/edit', { name: 'editTask', preValidation: app.authenticate }, async (req, reply) => {
+    .get('/tasks/:id/edit', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
       task.labels = await app.objection.models.label.query();
       task.statuses = await app.objection.models.taskStatus.query();
@@ -56,7 +56,7 @@ export default (app) => {
       reply.render('tasks/edit', { task });
       return reply;
     })
-    .post('/tasks', { name: 'createTask', preValidation: app.authenticate }, async (req, reply) => {
+    .post('/tasks', { preValidation: app.authenticate }, async (req, reply) => {
       const task = new app.objection.models.task();
       const {
         name, description, statusId, executorId,
@@ -83,7 +83,7 @@ export default (app) => {
       }
       return reply;
     })
-    .patch('/tasks/:id', { name: 'patchTask', preValidation: app.authenticate }, async (req, reply) => {
+    .patch('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
       // console.log('!----------->req.body.data:', req.body.data);
       const task = await app.objection.models.task.query().findById(req.params.id);
       const {
@@ -112,7 +112,7 @@ export default (app) => {
       }
       return reply;
     })
-    .delete('/tasks/:id', { name: 'deleteTask', preValidation: app.authenticate }, async (req, reply) => {
+    .delete('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
       const { creatorId } = task;
       if (!isEqual(creatorId, req.session.get('userId'))) {
