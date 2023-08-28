@@ -13,6 +13,7 @@ mixin input(entity, propertyName, errors = {}, labelText, tag = 'input', selectO
   - inputId = getInputId(propertyName)
   - inputName = getInputName(propertyName)
   - inputValue = _.get(entity, propertyName, '')
+  
   .mb-3(class=(errors[propertyName] && 'has-danger'))
     label(
       for= inputId
@@ -42,7 +43,7 @@ mixin input(entity, propertyName, errors = {}, labelText, tag = 'input', selectO
           each item in _.get(entity, selectOptionsPropertyName, [])
             option(
               value= item.id
-              selected= !isLabels(propertyName) && (item.id == entity[propertyName])
+              selected= (isLabels(propertyName) && item.selected) || (item.id == entity[propertyName])
             )= getName(item)
     if !_.isEmpty(propertyErrors)
       .invalid-feedback= propertyErrors.map(({ message }) => message).join('. ')

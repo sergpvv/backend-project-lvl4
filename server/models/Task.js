@@ -59,7 +59,7 @@ export default class Task extends unique(BaseModel) {
           to: 'users.id',
         },
       },
-      label: {
+      labels: {
         relation: Model.HasOneThroughRelation,
         modelClass: Label,
         join: {
@@ -68,7 +68,7 @@ export default class Task extends unique(BaseModel) {
             from: 'tasks_labels.taskId',
             to: 'tasks_labels.labelId',
           },
-          to: 'labels.Id ',
+          to: 'labels.id',
         },
       },
     };

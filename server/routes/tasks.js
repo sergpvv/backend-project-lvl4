@@ -34,7 +34,8 @@ export default (app) => {
     })
     .get('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
-      const labels = await app.objection.models.label.query();
+      const labels = await task.$relatedQuery('labels');
+      // console.log('!----------------------> labels:', labels);
       const { name: status } = await task.$relatedQuery('status');
       const creator = await task.$relatedQuery('creator');
       const executor = await task.$relatedQuery('executor');
@@ -51,16 +52,22 @@ export default (app) => {
     })
     .get('/tasks/:id/edit', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
-      task.labels = await app.objection.models.label.query();
+      const labels = await app.objection.models.label.query();
+      const taskLabels = await task.$relatedQuery('labels');
+      // console.log('!---> taskLabels:', taskLabels);
+      task.labels = labels.map(({ id, name }) => ({
+        id,
+        name,
+        selected: taskLabels?.some(({ id: labelId }) => id === labelId),
+      }));
       task.statuses = await app.objection.models.taskStatus.query();
       task.users = await app.objection.models.user.query();
       reply.render('tasks/edit', { task });
       return reply;
     })
     .post('/tasks', { preValidation: app.authenticate }, async (req, reply) => {
-      const task = new app.objection.models.task();
       const {
-        name, description, statusId, executorId,
+        name, description, statusId, executorId, labels,
       } = req.body.data;
       const newTaskData = {
         name,
@@ -70,10 +77,12 @@ export default (app) => {
         creatorId: parseId(req.session.get('userId')),
       };
       try {
-        await app.objection.models.task.query().insert(newTaskData).debug();
+        const task = await app.objection.models.task.query().insertAndFetch(newTaskData);
+        await Promise.all(labels.map((labelId) => task.$relatedQuery('labels').relate(labelId)));
         req.flash('info', i18next.t('flash.tasks.create.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
+        const task = new app.objection.models.task();
         task.$set(req.body.data);
         task.labels = await app.objection.models.label.query();
         task.statuses = await app.objection.models.taskStatus.query();
@@ -87,7 +96,7 @@ export default (app) => {
       // console.log('!----------->req.body.data:', req.body.data);
       const task = await app.objection.models.task.query().findById(req.params.id);
       const {
-        name, description, statusId, executorId,
+        name, description, statusId, executorId, labels: newLabels,
       } = req.body.data;
       const newTaskData = {
         name,
@@ -98,13 +107,20 @@ export default (app) => {
       // console.log('!----------->newTaskData', newTaskData);
       try {
         await task.$query().update(newTaskData);
+        const taskLabels = await task.$relatedQuery('labels');
+        await Promise.all(taskLabels.map(({ id }) => task.$relatedQuery('labels').unrelate(id)));
+        await Promise.all(newLabels.map((id) => task.$relatedQuery('labels').relate(id)));
         req.flash('info', i18next.t('flash.tasks.edit.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
         task.$set(req.body.data);
         task.statuses = await app.objection.models.taskStatus.query();
         task.users = await app.objection.models.user.query();
-        task.labels = await app.objection.models.label.query();
+        const labels = await app.objection.models.label.query();
+        task.labels = labels.map((label) => ({
+          ...label,
+          selected: newLabels.some((id) => isEqual(id, label.id)),
+        }));
         req.flash('error', i18next.t('flash.tasks.edit.error'));
         reply.code(422).render('tasks/edit', { task, errors: data });
       }
