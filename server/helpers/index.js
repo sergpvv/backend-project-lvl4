@@ -46,3 +46,11 @@ export const isEqual = (firstId = null, secondId = null) => {
   if (!isId(firstId) || !isId(secondId)) return null;
   return Number(firstId) === Number(secondId);
 };
+
+export const parseId = (id) => {
+  if (typeof id === 'number') return id;
+  if (id === '') return 0;
+  const result = parseInt(id, 10);
+  if (Number.isNaN(result)) return null;
+  return result;
+};

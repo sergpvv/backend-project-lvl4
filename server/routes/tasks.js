@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import { isEqual } from '../helpers/index.js';
+import { isEqual, parseId } from '../helpers/index.js';
 
 export default (app) => {
   app
@@ -33,19 +33,20 @@ export default (app) => {
       return reply;
     })
     .get('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
-      const taskData = await app.objection.models.task.query().findById(req.params.id);
+      const task = await app.objection.models.task.query().findById(req.params.id);
       const labels = await app.objection.models.label.query();
-      const { name: status } = await taskData.$relatedQuery('status');
-      const creator = await taskData.$relatedQuery('creator');
-      const executor = await taskData.$relatedQuery('executor');
-      const task = {
-        ...taskData,
-        labels,
-        status,
-        creator,
-        executor,
-      };
-      reply.render('tasks/card', { task });
+      const { name: status } = await task.$relatedQuery('status');
+      const creator = await task.$relatedQuery('creator');
+      const executor = await task.$relatedQuery('executor');
+      reply.render('tasks/card', {
+        task: {
+          ...task,
+          labels,
+          status,
+          creator,
+          executor,
+        },
+      });
       return reply;
     })
     .get('/tasks/:id/edit', { preValidation: app.authenticate }, async (req, reply) => {
@@ -64,11 +65,10 @@ export default (app) => {
       const newTaskData = {
         name,
         description,
-        statusId: statusId?.length > 0 ? Number(statusId) : 0,
-        executorId: executorId?.length > 0 ? executorId : null,
-        creatorId: Number(req.session.get('userId')),
+        statusId: parseId(statusId),
+        executorId: parseId(executorId) > 0 ? executorId : null,
+        creatorId: parseId(req.session.get('userId')),
       };
-      // console.log('!----------->newTaskData', newTaskData);
       try {
         await app.objection.models.task.query().insert(newTaskData).debug();
         req.flash('info', i18next.t('flash.tasks.create.success'));
@@ -92,14 +92,12 @@ export default (app) => {
       const newTaskData = {
         name,
         description,
-        statusId: statusId?.length > 0 ? Number(statusId) : 0,
-        executorId: executorId?.length > 0 ? executorId : null,
+        statusId: parseId(statusId),
+        executorId: parseId(executorId) > 0 ? executorId : null,
       };
-      console.log('!----------->newTaskData', newTaskData);
+      // console.log('!----------->newTaskData', newTaskData);
       try {
-        // const validTask = await app.objection.models.task.fromJson(newTaskData).debug();
-        // await task.$query().patch(validTask).debug();
-        await task.$query().update(newTaskData).debug();
+        await task.$query().update(newTaskData);
         req.flash('info', i18next.t('flash.tasks.edit.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
@@ -114,8 +112,7 @@ export default (app) => {
     })
     .delete('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
-      const { creatorId } = task;
-      if (!isEqual(creatorId, req.session.get('userId'))) {
+      if (!isEqual(task.creatorId, req.session.get('userId'))) {
         req.flash('error', i18next.t('flash.tasks.delete.accessDenied'));
         reply.redirect(app.reverse('tasks'));
         return reply;

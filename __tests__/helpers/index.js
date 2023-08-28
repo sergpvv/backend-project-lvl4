@@ -19,7 +19,7 @@ const generateUser = () => ({
 
 const generateStatus = () => ({ name: faker.word.adjective() });
 
-const generateTask = (statusId = 0, executorId = 0, creatorId = 0) => ({
+const generateTask = (statusId, executorId, creatorId) => ({
   name: faker.hacker.noun(),
   description: faker.lorem.sentence(),
   statusId,
@@ -63,6 +63,8 @@ export const userPropertySheetExceptPassword = _.chunk(_.reject(userPropertyName
 
 export const getTestData = () => testData;
 
+const getId = () => getRandom() + 1;
+
 export const prepareData = async (app) => {
   const insert = (table, data) => app.objection.knex(table).insert(data);
 
@@ -82,5 +84,9 @@ export const prepareData = async (app) => {
 
   testData.tasks.new = generateTask(status.id, user.id, user.id);
   testData.tasks.existing = generateTask(status.id, user.id, user.id);
+  testData.tasks.editing = generateTask(getId(), getId(), user.id);
   await insert('tasks', testData.tasks.existing);
+  const task = await app.objection.models.task.query()
+    .findOne({ name: testData.tasks.existing.name });
+  testData.tasks.existingId = task.id;
 };

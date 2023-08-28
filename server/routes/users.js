@@ -17,7 +17,7 @@ export default (app) => {
     .get('/users/:id/edit', { name: 'editUser', preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
       if (!isEqual(id, req.session.get('userId'))) {
-        req.flash('error', i18next.t('flash.accessDenied'));
+        req.flash('error', i18next.t('flash.users.accessDenied'));
         reply.redirect(app.reverse('users'));
         return reply;
       }
@@ -41,7 +41,7 @@ export default (app) => {
     .patch('/users/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
       if (!isEqual(id, req.session.get('userId'))) {
-        req.flash('error', i18next.t('flash.accessDenied'));
+        req.flash('error', i18next.t('flash.users.accessDenied'));
         reply.redirect(app.reverse('users'));
         return reply;
       }
@@ -62,7 +62,7 @@ export default (app) => {
     .delete('/users/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const { id } = req.params;
       if (!isEqual(id, req.session.get('userId'))) {
-        req.flash('error', i18next.t('flash.accessDenied'));
+        req.flash('error', i18next.t('flash.users.accessDenied'));
         reply.redirect(app.reverse('users'));
         return reply;
       }

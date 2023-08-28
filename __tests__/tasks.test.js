@@ -12,6 +12,7 @@ describe('test tasks CRUD', () => {
   let makeRequest;
   let signIn;
   let makeAuthedRequest;
+  let signOut;
   let findByName;
   let findById;
   let findBy;
@@ -47,6 +48,8 @@ describe('test tasks CRUD', () => {
 
     makeAuthedRequest = (method, url, data = null) => makeRequest(method, url, data, cookie);
 
+    signOut = () => makeAuthedRequest('delete', 'session');
+
     findBy = (property) => models.task.query().findOne(property);
 
     findByName = (name) => findBy({ name });
@@ -80,12 +83,15 @@ describe('test tasks CRUD', () => {
     expect(await findBy({ name })).not.toBeDefined();
 
     await signIn();
-    response = await makeAuthedRequest('post', 'tasks', testData.tasks.exist);
-    expect(response.statusCode).toBe(200);
+    response = await makeAuthedRequest('post', 'tasks', testData.tasks.existing);
+    expect(response.statusCode).toBe(422);
 
     response = await makeAuthedRequest('post', 'tasks', { ...task, name: '' });
     expect(response.statusCode).toBe(422);
     expect(await findByName('')).not.toBeDefined();
+
+    response = await makeAuthedRequest('post', 'tasks', { ...task, statusId: '' });
+    expect(response.statusCode).toBe(422);
 
     response = await makeAuthedRequest('post', 'tasks', task);
     expect(response.statusCode).toBe(302);
@@ -94,8 +100,8 @@ describe('test tasks CRUD', () => {
   });
 
   it('edit', async () => {
-    const task = testData.tasks.existing;
-    const { id } = await findByName(task.name);
+    const task = testData.tasks.editing;
+    const { existingId: id } = testData.tasks;
     let response = await makeRequest('get', `/tasks/${id}/edit`);
     expect(response.statusCode).toBe(302);
 
@@ -103,24 +109,40 @@ describe('test tasks CRUD', () => {
     response = await makeAuthedRequest('get', `/tasks/${id}/edit`);
     expect(response.statusCode).toBe(200);
 
-    response = await makeAuthedRequest('patch', `/tasks/${id}`, { name: '' });
+    response = await makeAuthedRequest('patch', `/tasks/${id}`, { ...task, name: '' });
     expect(response.statusCode).toBe(422);
-    const expected = await findById(id);
-    expect(task.name).toBe(expected.name);
+    expect(await findById(id)).toMatchObject(testData.tasks.existing);
 
-    const { name } = testData.tasks.new;
-    // const newNameTask = { ...task, name };
-    // console.log('!------------>task:', JSON.stringify(task, null, '  '));
-    // console.log('!------------>newNameTask:', JSON.stringify(newNameTask, null, '  '));
-    response = await makeAuthedRequest('patch', `/tasks/${id}`, { name });
-    // console.log('!------------------------->response:', response);
+    response = await makeAuthedRequest('patch', `/tasks/${id}`, { ...task, statusId: '' });
+    expect(response.statusCode).toBe(422);
+    expect(await findById(id)).toMatchObject(testData.tasks.existing);
+
+    response = await makeAuthedRequest('patch', `/tasks/${id}`, task);
     expect(response.statusCode).toBe(302);
-    const editedTask = await findById(id);
-    expect(name).toBe(editedTask.name);
+    expect(await findById(id)).toMatchObject(task);
+  });
+
+  it('delete', async () => {
+    const { existingId: id } = testData.tasks;
+    const options = ['delete', `/tasks/${id}`];
+    let response = await makeRequest(...options);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(id)).toBeDefined();
+
+    await signIn(testData.users.new);
+    response = await makeAuthedRequest(...options);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(id)).toBeDefined();
+
+    await signOut();
+    await signIn();
+    response = await makeAuthedRequest(...options);
+    expect(response.statusCode).toBe(302);
+    expect(await findById(id)).not.toBeDefined();
   });
 
   afterEach(async () => {
-    await makeAuthedRequest('delete', '/session');
+    await signOut();
   });
 
   afterAll(async () => {
