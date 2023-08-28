@@ -1,7 +1,7 @@
-extends ../layouts/application
+extends ../layouts/header.pug
 
-block header
-  h1.display-4.fw-bold.mt-4= t('views.labels.editing')
+block prepend header
+  - headerPath = 'views.labels.editing'
 
 block content
   +formFor()(action=`/labels/${label.id}` method='post')

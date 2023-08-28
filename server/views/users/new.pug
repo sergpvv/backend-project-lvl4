@@ -1,13 +1,13 @@
-extends ../layouts/application
+extends ../layouts/header.pug
 
 block prepend header
-  - entity = 'signUp'
+  - headerPath = 'layouts.application.signUp'
 
 block content
   .d-flex.align-items-center.justify-content-center
     +formFor()(action=route('users') method='post')
       +input(user, 'firstName', errors, t('views.users.firstName'))(type="text")
       +input(user, 'lastName', errors, t('views.users.lastName'))(type="text")
-      +input(user, 'email', errors, t('views.users.email'))(type="text")
+      +input(user, 'email', errors, t('views.users.email'))(type="email")
       +input(user, 'password', errors, t('views.users.password'))(type="password")
       +submit(user)(value=t('views.save'))

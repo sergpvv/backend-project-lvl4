@@ -1,4 +1,4 @@
-extends ../layouts/table
+extends ../layouts/table.pug
 
 block append header
-  a.btn.btn-success(href=`/${entity}/new`)= t(`views.${entity}.create`)
+  a.btn.btn-success.mb-5(href=`/${entity}/new`)= t(`views.${entity}.create`)

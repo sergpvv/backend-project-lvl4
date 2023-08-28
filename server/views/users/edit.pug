@@ -1,11 +1,11 @@
-extends ../layouts/application.pug
+extends ../layouts/header.pug
 
-block header
-  .h1.display-4.fw-bold.mt-4= t('views.users.editing')
+block prepend header
+  - headerPath = 'views.users.editing'
 
 block content
   +formFor()(action=`/users/${user.id}` method='post')
     each field in ['firstName', 'lastName', 'email']
-      +input(user, field, errors, t(`views.users.${field}`))(type='text' value=`${user[field]}`)
+      +input(user, field, errors, t(`views.users.${field}`))(type='text' value=user[field])
     +input(user, 'password', errors, t('views.users.password'))(type='password')
     +buttonTo('/users/#{user.id}', 'patch')(class='btn btn-success' value=t('views.edit'))

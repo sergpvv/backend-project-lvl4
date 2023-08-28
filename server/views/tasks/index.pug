@@ -1,7 +1,8 @@
-extends ../layouts/index
+extends ../layouts/index.pug
 
 block prepend header
   - entity = 'tasks'
+  - headerPath = 'layouts.application.tasks'
 
 block prepend content
   .card.shadow-sm
@@ -10,28 +11,29 @@ block prepend content
         .row
           .col-12.col-md
             .input-group.mb-3
-              label.input-group-text(for='data_status')
+              label.input-group-text(for='data_status')= t('views.tasks.status')
               select#data_status.form-select(name='status')
                 option
                 each taskStatus in statuses
                   option(value=taskStatus.id)= taskStatus.name
           .col-12.col-md
             .input-group.mb-3
-              label.input-group-text(for='data_executor')
+              label.input-group-text(for='data_executor')= t('views.tasks.executor')
               select#data_executor.form-select(name='executor')
                 option
-                option(value='1') qwe qwe
+                each user in users
+                  option(value=user.id)= fn(user)
           .col-12.col-md
             .input-group.mb-3
-              label.input-group-text(for='data_label')
+              label.input-group-text(for='data_label')= t('views.tasks.label')
               select#data_label.form-select(name='label')
                 option
-                option(value='1') q
+                each label in labels      
+                  option(value=label.id)= label.name
         .mb-3.form-check
           input#data_isCreatorUser.form-check-input(type='checkbox' name='isCreatorUser')
-          label.form-check-label(for='data_isCreatorUser')
-        input.btn.btn-primary(type='submit' value='Показать')
-
+          label.form-check-label(for='data_isCreatorUser')= t('views.tasks.myTasksOnly')
+        input.btn.btn-primary(type='submit' value=t('views.tasks.show'))
 
 block table
   thead

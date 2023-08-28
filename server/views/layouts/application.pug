@@ -36,7 +36,6 @@ html(lang="en")
         each message in messages
           div.alert(class=`alert-${getAlertClass(type)}`)= message
       block header
-        h1.display-4.fw-bold.mt-4= t(`layouts.application.${entity}`)
       block content
     footer
       .container.my-5.pt-4.border-top

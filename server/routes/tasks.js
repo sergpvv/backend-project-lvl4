@@ -16,7 +16,12 @@ export default (app) => {
           executor,
         });
       }));
-      reply.render('tasks/index', { tasks });
+      const statuses = await app.objection.models.taskStatus.query();
+      const users = await app.objection.models.user.query();
+      const labels = await app.objection.models.label.query();
+      reply.render('tasks/index', {
+        tasks, statuses, users, labels,
+      });
       return reply;
     })
     .get('/tasks/new', { name: 'newTask', preValidation: app.authenticate }, async (req, reply) => {
