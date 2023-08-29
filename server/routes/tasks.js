@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import { isEqual, parseId } from '../helpers/index.js';
+import { isEqual, parseId, arrayize } from '../helpers/index.js';
 
 export default (app) => {
   app
@@ -35,14 +35,13 @@ export default (app) => {
     .get('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
       const labels = await task.$relatedQuery('labels');
-      // console.log('!----------------------> labels:', labels);
       const { name: status } = await task.$relatedQuery('status');
       const creator = await task.$relatedQuery('creator');
       const executor = await task.$relatedQuery('executor');
       reply.render('tasks/card', {
         task: {
           ...task,
-          labels,
+          labels: arrayize(labels),
           status,
           creator,
           executor,
@@ -53,12 +52,11 @@ export default (app) => {
     .get('/tasks/:id/edit', { preValidation: app.authenticate }, async (req, reply) => {
       const task = await app.objection.models.task.query().findById(req.params.id);
       const labels = await app.objection.models.label.query();
-      const taskLabels = await task.$relatedQuery('labels');
-      // console.log('!---> taskLabels:', taskLabels);
+      const taskLabels = arrayize(await task.$relatedQuery('labels'));
       task.labels = labels.map(({ id, name }) => ({
         id,
         name,
-        selected: taskLabels?.some(({ id: labelId }) => id === labelId),
+        selected: taskLabels.some(({ id: labelId }) => id === labelId),
       }));
       task.statuses = await app.objection.models.taskStatus.query();
       task.users = await app.objection.models.user.query();
@@ -69,6 +67,7 @@ export default (app) => {
       const {
         name, description, statusId, executorId, labels,
       } = req.body.data;
+      const taskLabels = arrayize(labels);
       const newTaskData = {
         name,
         description,
@@ -78,7 +77,9 @@ export default (app) => {
       };
       try {
         const task = await app.objection.models.task.query().insertAndFetch(newTaskData);
-        await Promise.all(labels.map((labelId) => task.$relatedQuery('labels').relate(labelId)));
+        if (taskLabels.length > 0) {
+          await Promise.all(taskLabels.map((id) => task.$relatedQuery('labels').relate(parseId(id))));
+        }
         req.flash('info', i18next.t('flash.tasks.create.success'));
         reply.redirect(app.reverse('tasks'));
       } catch ({ data }) {
@@ -93,22 +94,25 @@ export default (app) => {
       return reply;
     })
     .patch('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
-      // console.log('!----------->req.body.data:', req.body.data);
       const task = await app.objection.models.task.query().findById(req.params.id);
       const {
-        name, description, statusId, executorId, labels: newLabels,
+        name, description, statusId, executorId, labels,
       } = req.body.data;
+      const newLabels = arrayize(labels);
       const newTaskData = {
         name,
         description,
         statusId: parseId(statusId),
         executorId: parseId(executorId) > 0 ? executorId : null,
       };
-      // console.log('!----------->newTaskData', newTaskData);
       try {
         await task.$query().update(newTaskData);
-        const taskLabels = await task.$relatedQuery('labels');
-        await Promise.all(taskLabels.map(({ id }) => task.$relatedQuery('labels').unrelate(id)));
+        const taskLabels = arrayize(await task.$relatedQuery('labels'));
+        // console.log('!----------->taskLabels:', JSON.stringify(taskLabels, null, '  '));
+        if (taskLabels.length > 0) {
+          await Promise.all(taskLabels.map(({ id }) => task
+            .$relatedQuery('labels').unrelate().where('id', id)));
+        }
         await Promise.all(newLabels.map((id) => task.$relatedQuery('labels').relate(id)));
         req.flash('info', i18next.t('flash.tasks.edit.success'));
         reply.redirect(app.reverse('tasks'));
@@ -116,11 +120,11 @@ export default (app) => {
         task.$set(req.body.data);
         task.statuses = await app.objection.models.taskStatus.query();
         task.users = await app.objection.models.user.query();
-        const labels = await app.objection.models.label.query();
-        task.labels = labels.map((label) => ({
-          ...label,
-          selected: newLabels.some((id) => isEqual(id, label.id)),
-        }));
+        task.labels = arrayize(await app.objection.models.label.query())
+          .map((label) => ({
+            ...label,
+            selected: newLabels.some((id) => isEqual(id, label.id)),
+          }));
         req.flash('error', i18next.t('flash.tasks.edit.error'));
         reply.code(422).render('tasks/edit', { task, errors: data });
       }
@@ -134,6 +138,18 @@ export default (app) => {
         return reply;
       }
       try {
+        const labels = await task.$relatedQuery('labels');
+        console.log('!----------->await task.$relatedQuery(\'labels\')):', labels);
+        const isArr = Array.isArray(labels);
+        const taskLabels = isArr ? labels : [];
+        if (!isArr) taskLabels.push(labels);
+        console.log('!----------->taskLabels:', JSON.stringify(taskLabels, null, '  '));
+        if (taskLabels[0]) {
+          const unrelatePromises = taskLabels.map(({ id }) => task.$relatedQuery('labels').unrelate().where('id', id));
+          console.log('!----------->unrelatePromises:', unrelatePromises);
+          await Promise.all(unrelatePromises);
+          //          await Promise.all(taskLabels.map(({ id }) => task.$relatedQuery('labels').unrelate().where('id', id)));
+        }
         await task.$query().delete();
         req.flash('info', i18next.t('flash.tasks.delete.success'));
       } catch ({ data }) {

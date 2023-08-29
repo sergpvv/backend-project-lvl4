@@ -54,3 +54,9 @@ export const parseId = (id) => {
   if (Number.isNaN(result)) return null;
   return result;
 };
+
+export const arrayize = (value) => {
+  if (typeof value === 'undefined') return [];
+  if (Array.isArray(value)) return value;
+  return [value];
+};
