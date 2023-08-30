@@ -20,7 +20,7 @@ const generateUser = () => ({
 const generateStatus = () => ({ name: _.uniqueId(faker.word.adjective()) });
 
 const generateTask = (statusId, executorId, creatorId) => ({
-  name: faker.hacker.noun(),
+  name: _.uniqueId(faker.hacker.noun()),
   description: faker.lorem.sentence(),
   statusId,
   executorId,
@@ -39,11 +39,16 @@ const existingId = getRandom();
 
 const getDeletable = (testEntities) => testEntities[(existingId + 1) % length];
 
+const isUnique = (entity, unique, testEntities) => _.filter(
+  testEntities,
+  ({ [unique]: value }) => entity[unique] === value,
+).length === 0;
+
 const generateNewEntity = (generateEntity, unique, testEntities) => {
   let result = generateEntity();
   let counter = 42;
   while ((counter > 0)
-    && testEntities.some(({ [unique]: value }) => result[unique] === value)) {
+    && !isUnique(result, unique, testEntities)) {
     result = generateEntity();
     counter -= 1;
   }
