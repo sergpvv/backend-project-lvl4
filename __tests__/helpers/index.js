@@ -17,7 +17,7 @@ const generateUser = () => ({
   password: faker.internet.password(),
 });
 
-const generateStatus = () => ({ name: faker.word.adjective() });
+const generateStatus = () => ({ name: _.uniqueId(faker.word.adjective()) });
 
 const generateTask = (statusId, executorId, creatorId) => ({
   name: faker.hacker.noun(),
@@ -27,28 +27,47 @@ const generateTask = (statusId, executorId, creatorId) => ({
   creatorId,
 });
 
+const generateLabel = () => ({ name: _.uniqueId(faker.hacker.verb()) });
+
 const testUsers = generateEntities(generateUser);
 
 const testStatuses = generateEntities(generateStatus);
 
-// const tasks = generateEntities(generateTask);
+const testLabels = generateEntities(generateLabel);
 
 const existingId = getRandom();
 
 const getDeletable = (testEntities) => testEntities[(existingId + 1) % length];
 
+const generateNewEntity = (generateEntity, unique, testEntities) => {
+  let result = generateEntity();
+  let counter = 42;
+  while ((counter > 0)
+    && testEntities.some(({ [unique]: value }) => result[unique] === value)) {
+    result = generateEntity();
+    counter -= 1;
+  }
+  return result;
+};
+
 const testData = {
   users: {
-    new: generateUser(),
+    new: generateNewEntity(generateUser, 'email', testUsers),
     editing: generateUser(),
     existing: testUsers[existingId],
     deletable: getDeletable(testUsers),
   },
   statuses: {
-    new: generateStatus(),
+    new: generateNewEntity(generateStatus, 'name', testStatuses),
     editing: generateStatus(),
     existing: testStatuses[existingId],
     deletable: getDeletable(testStatuses),
+  },
+  labels: {
+    new: generateNewEntity(generateLabel, 'name', testLabels),
+    editing: generateLabel(),
+    existing: testLabels[existingId],
+    deletable: getDeletable(testLabels),
   },
   tasks: {},
 };
@@ -78,8 +97,8 @@ export const prepareData = async (app) => {
   testData.users.existingId = user.id;
 
   await insert('statuses', testStatuses);
-  const { name } = testData.statuses.existing;
-  const status = await app.objection.models.taskStatus.query().findOne({ name });
+  const status = await app.objection.models.taskStatus.query()
+    .findOne({ name: testData.statuses.existing.name });
   testData.statuses.existingId = status.id;
 
   testData.tasks.new = generateTask(status.id, user.id, user.id);
@@ -89,4 +108,10 @@ export const prepareData = async (app) => {
   const task = await app.objection.models.task.query()
     .findOne({ name: testData.tasks.existing.name });
   testData.tasks.existingId = task.id;
+
+  await insert('labels', testLabels);
+  const label = await app.objection.models.label.query()
+    .findOne({ name: testData.labels.existing.name });
+  testData.labels.existingId = label.id;
+  await task.$relatedQuery('labels').relate(label.id);
 };
