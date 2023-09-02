@@ -1,7 +1,6 @@
 import objectionUnique from 'objection-unique';
-// import { Model } from 'objection';
 import BaseModel from './BaseModel.js';
-// import Task from './Task.js';
+import Task from './Task.js';
 
 const unique = objectionUnique({ fields: ['name'] });
 
@@ -20,20 +19,21 @@ export default class Label extends unique(BaseModel) {
       },
     };
   }
-/*
-  static relationMappings = {
-    task: {
-      relation: Model.HasOneThroughRelation,
-      modelClass: Task,
-      join: {
-        from: 'labels.id',
-        through: {
-          from: 'tasks_labels.labelId',
-          to: 'tasks_labels.taskId',
+
+  static get relationMappings() {
+    return {
+      tasks: {
+        relation: BaseModel.HasOneThroughRelation,
+        modelClass: Task,
+        join: {
+          from: 'labels.id',
+          through: {
+            from: 'tasks_labels.labelId',
+            to: 'tasks_labels.taskId',
+          },
+          to: 'tasks.Id ',
         },
-        to: 'tasks.Id ',
       },
-    },
-  };
-*/
+    };
+  }
 }

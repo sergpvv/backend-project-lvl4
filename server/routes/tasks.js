@@ -4,7 +4,33 @@ import { isEqual, parseId, arrayize } from '../helpers/index.js';
 export default (app) => {
   app
     .get('/tasks', { name: 'tasks', preValidation: app.authenticate }, async (req, reply) => {
-      const taskList = await app.objection.models.task.query();
+      const filter = req.query;
+      console.log('!-------->filter:', JSON.stringify(filter, null, '  '));
+      const {
+        status, executor, label = null, isCreatorUser = null,
+      } = filter;
+      const [statusId, executorId, labelId] = [status, executor, label].map(parseId);
+      let tasksLabelId;
+      if (labelId) {
+        const filterLabel = await app.objection.models.label.query().findById(labelId);
+        tasksLabelId = filterLabel.$relatedQuery('tasks');
+      }
+      console.log('!-------->labelId', labelId);
+      const taskListQuery = labelId
+        ? tasksLabelId
+        : app.objection.models.task.query();
+      if (statusId) {
+        taskListQuery.modify(((query, id) => query.where('statusId', id)), statusId);
+      }
+      if (executorId) {
+        taskListQuery.modify(((query, id) => query.where('executorId', id)), executorId);
+      }
+      let taskList = arrayize(await taskListQuery);
+      console.log('!-------->taskList:', taskList);
+      if (isCreatorUser === 'on') {
+        taskListQuery.modify(((query, id) => query.where('creatorId', id)), req.session.get('userId'));
+      }
+      taskList = arrayize(await taskListQuery);
       const tasks = await Promise.all(taskList.map(async (task) => {
         const { name: status } = await task.$relatedQuery('status');
         const creator = await task.$relatedQuery('creator');
