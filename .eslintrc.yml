@@ -31,3 +31,4 @@ rules:
       - req
       - reply
   no-underscore-dangle: [2, { "allow": ["__filename", "__dirname"] }]
+  import/no-cycle: 0

@@ -73,4 +73,16 @@ export default class Task extends unique(BaseModel) {
       },
     };
   }
+
+  static modifiers = {
+    status(query, id) {
+      query.where('statusId', id);
+    },
+    executor(query, id) {
+      query.where('executorId', id);
+    },
+    creator(query, id) {
+      query.where('creatorId', id);
+    },
+  };
 }

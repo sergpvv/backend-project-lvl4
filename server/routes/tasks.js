@@ -4,44 +4,20 @@ import { isEqual, parseId, arrayize } from '../helpers/index.js';
 export default (app) => {
   app
     .get('/tasks', { name: 'tasks', preValidation: app.authenticate }, async (req, reply) => {
-      const filter = req.query;
-      console.log('!-------->filter:', JSON.stringify(filter, null, '  '));
       const {
-        status, executor, label = null, isCreatorUser = null,
-      } = filter;
-      const [statusId, executorId, labelId] = [status, executor, label].map(parseId);
-      let tasksLabelId;
-      if (labelId) {
-        const filterLabel = await app.objection.models.label.query().findById(labelId);
-        tasksLabelId = filterLabel.$relatedQuery('tasks');
+        status = null, executor = null, label = null, isCreatorUser = null,
+      } = req.query;
+      const creator = isCreatorUser === 'on' ? req.session.get('userId') : null;
+      let tasksFilteredByLabel;
+      if (label) {
+        const filterLabel = await app.objection.models.label.query().findById(label);
+        tasksFilteredByLabel = filterLabel.$relatedQuery('tasks');
       }
-      console.log('!-------->labelId', labelId);
-      const taskListQuery = labelId
-        ? tasksLabelId
-        : app.objection.models.task.query();
-      if (statusId) {
-        taskListQuery.modify(((query, id) => query.where('statusId', id)), statusId);
-      }
-      if (executorId) {
-        taskListQuery.modify(((query, id) => query.where('executorId', id)), executorId);
-      }
-      let taskList = arrayize(await taskListQuery);
-      console.log('!-------->taskList:', taskList);
-      if (isCreatorUser === 'on') {
-        taskListQuery.modify(((query, id) => query.where('creatorId', id)), req.session.get('userId'));
-      }
-      taskList = arrayize(await taskListQuery);
-      const tasks = await Promise.all(taskList.map(async (task) => {
-        const { name: status } = await task.$relatedQuery('status');
-        const creator = await task.$relatedQuery('creator');
-        const executor = await task.$relatedQuery('executor');
-        return ({
-          ...task,
-          status,
-          creator,
-          executor,
-        });
-      }));
+      const taskListQuery = tasksFilteredByLabel ?? app.objection.models.task.query();
+      const filters = Object.entries({ status, executor, creator }).filter(([, id]) => id);
+      filters.forEach(([modifier, id]) => taskListQuery.modify(modifier, id));
+      const taskList = await taskListQuery.withGraphJoined('[status, creator, executor]');
+      const tasks = arrayize(taskList);
       const statuses = await app.objection.models.taskStatus.query();
       const users = await app.objection.models.user.query();
       const labels = await app.objection.models.label.query();
@@ -59,20 +35,10 @@ export default (app) => {
       return reply;
     })
     .get('/tasks/:id', { preValidation: app.authenticate }, async (req, reply) => {
-      const task = await app.objection.models.task.query().findById(req.params.id);
-      const labels = arrayize(await task.$relatedQuery('labels'));
-      const { name: status } = await task.$relatedQuery('status');
-      const creator = await task.$relatedQuery('creator');
-      const executor = await task.$relatedQuery('executor');
-      reply.render('tasks/card', {
-        task: {
-          ...task,
-          labels,
-          status,
-          creator,
-          executor,
-        },
-      });
+      const task = await app.objection.models.task.query().findById(req.params.id)
+        .withGraphJoined('[status, creator, executor]');
+      task.labels = arrayize(await task.$relatedQuery('labels'));
+      reply.render('tasks/card', { task });
       return reply;
     })
     .get('/tasks/:id/edit', { preValidation: app.authenticate }, async (req, reply) => {
@@ -93,7 +59,7 @@ export default (app) => {
       const {
         name, description, statusId, executorId, labels,
       } = req.body.data;
-      const taskLabels = arrayize(labels);
+      const selectedLabels = arrayize(labels);
       const newTaskData = {
         name,
         description,
@@ -104,10 +70,9 @@ export default (app) => {
       try {
         await app.objection.models.task.transaction(async (trx) => {
           const task = await app.objection.models.task.query(trx).insertAndFetch(newTaskData);
-          if (taskLabels.length > 0) {
-            const relateLabelsPromises = taskLabels
-              .map((id) => task.$relatedQuery('labels', trx).relate(id));
-            await Promise.all(relateLabelsPromises);
+          if (selectedLabels.length > 0) {
+            await Promise.all(selectedLabels
+              .map((id) => task.$relatedQuery('labels', trx).relate(id)));
           }
         });
         req.flash('info', i18next.t('flash.tasks.create.success'));
@@ -119,7 +84,7 @@ export default (app) => {
         task.labels = arrayize(await app.objection.models.label.query())
           .map((label) => ({
             ...label,
-            selected: taskLabels.some((id) => isEqual(id, label.id)),
+            selected: selectedLabels.some((id) => isEqual(id, label.id)),
           }));
         task.statuses = await app.objection.models.taskStatus.query();
         task.users = await app.objection.models.user.query();
@@ -133,7 +98,7 @@ export default (app) => {
       const {
         name, description, statusId, executorId, labels,
       } = req.body.data;
-      const newLabels = arrayize(labels);
+      const selectedLabels = arrayize(labels);
       const newTaskData = {
         name,
         description,
@@ -144,7 +109,8 @@ export default (app) => {
         await app.objection.models.task.transaction(async (trx) => {
           await task.$query(trx).update(newTaskData);
           await task.$relatedQuery('labels', trx).unrelate();
-          await Promise.all(newLabels.map((id) => task.$relatedQuery('labels', trx).relate(id)));
+          await Promise.all(selectedLabels
+            .map((id) => task.$relatedQuery('labels', trx).relate(id)));
         });
         req.flash('info', i18next.t('flash.tasks.edit.success'));
         reply.redirect(app.reverse('tasks'));
@@ -155,7 +121,7 @@ export default (app) => {
         task.labels = arrayize(await app.objection.models.label.query())
           .map((label) => ({
             ...label,
-            selected: newLabels.some((id) => isEqual(id, label.id)),
+            selected: selectedLabels.some((id) => isEqual(id, label.id)),
           }));
         req.flash('error', i18next.t('flash.tasks.edit.error'));
         reply.code(422).render('tasks/edit', { task, errors: data });

@@ -51,7 +51,7 @@ block table
         td= task.id
         td
           a(href=`/tasks/${task.id}`)= task.name
-        td= task.status
+        td= task.status.name
         td= fn(task.creator)
         td= fn(task.executor)
         td= formatDate(task.createdAt)
