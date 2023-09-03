@@ -14,24 +14,33 @@ block prepend content
               label.input-group-text(for='data_status')= t('views.tasks.status')
               select#data_status.form-select(name='status')
                 option
-                each taskStatus in statuses
-                  option(value=taskStatus.id)= taskStatus.name
+                each status in statuses
+                  option(
+                    value= status.id
+                    selected= eq(status.id, filter.status)
+                  )= status.name
           .col-12.col-md
             .input-group.mb-3
               label.input-group-text(for='data_executor')= t('views.tasks.executor')
               select#data_executor.form-select(name='executor')
                 option
                 each user in users
-                  option(value=user.id)= fn(user)
+                  option(
+                    value= user.id
+                    selected= eq(user.id, filter.executor)
+                  )= fn(user)
           .col-12.col-md
             .input-group.mb-3
               label.input-group-text(for='data_label')= t('views.tasks.label')
               select#data_label.form-select(name='label')
                 option
                 each label in labels      
-                  option(value=label.id)= label.name
+                  option(
+                    value= label.id
+                    selected= eq(label.id, filter.label)
+                  )= label.name
         .mb-3.form-check
-          input#data_isCreatorUser.form-check-input(type='checkbox' name='isCreatorUser')
+          input#data_isCreatorUser.form-check-input(type='checkbox' name='isCreatorUser' checked=filter.isCreatorUser)
           label.form-check-label(for='data_isCreatorUser')= t('views.tasks.myTasksOnly')
         input.btn.btn-primary(type='submit' value=t('views.tasks.show'))
 

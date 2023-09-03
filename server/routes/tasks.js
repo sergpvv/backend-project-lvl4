@@ -14,15 +14,18 @@ export default (app) => {
         tasksFilteredByLabel = filterLabel.$relatedQuery('tasks');
       }
       const taskListQuery = tasksFilteredByLabel ?? app.objection.models.task.query();
-      const filters = Object.entries({ status, executor, creator }).filter(([, id]) => id);
-      filters.forEach(([modifier, id]) => taskListQuery.modify(modifier, id));
+      Object.entries({ status, executor, creator }).filter(([, id]) => id)
+        .forEach(([modifier, id]) => taskListQuery.modify(modifier, id));
       const taskList = await taskListQuery.withGraphJoined('[status, creator, executor]');
       const tasks = arrayize(taskList);
       const statuses = await app.objection.models.taskStatus.query();
       const users = await app.objection.models.user.query();
       const labels = await app.objection.models.label.query();
+      const filter = {
+        status, executor, label, isCreatorUser,
+      };
       reply.render('tasks/index', {
-        tasks, statuses, users, labels,
+        tasks, statuses, users, labels, filter,
       });
       return reply;
     })
