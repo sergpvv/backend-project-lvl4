@@ -16,6 +16,7 @@ describe('test tasks CRUD', () => {
   let findByName;
   let findById;
   let findBy;
+  let findLabel;
 
   beforeAll(async () => {
     app = fastify({
@@ -55,6 +56,8 @@ describe('test tasks CRUD', () => {
     findByName = (name) => findBy({ name });
 
     findById = (id) => models.task.query().findById(id);
+
+    findLabel = (id) => models.label.query().findById(id);
   });
 
   it('index', async () => {
@@ -78,6 +81,8 @@ describe('test tasks CRUD', () => {
   it('create', async () => {
     const task = testData.tasks.new;
     const { name } = testData.tasks.new;
+    const labelId = testData.labels.existingId;
+
     let response = await makeRequest('post', 'tasks', task);
     expect(response.statusCode).toBe(302);
     expect(await findBy({ name })).not.toBeDefined();
@@ -93,33 +98,45 @@ describe('test tasks CRUD', () => {
     response = await makeAuthedRequest('post', 'tasks', { ...task, statusId: '' });
     expect(response.statusCode).toBe(422);
 
-    response = await makeAuthedRequest('post', 'tasks', task);
+    response = await makeAuthedRequest('post', 'tasks', { ...task, labels: labelId });
     expect(response.statusCode).toBe(302);
-    const { description } = await findByName(name);
-    expect(description).toBe(task.description);
+    const insertedTask = await findByName(name);
+    expect(insertedTask).toMatchObject(task);
+    const expectedLabel = await findLabel(labelId);
+    expect(await insertedTask.$relatedQuery('labels')).toMatchObject(expectedLabel);
   });
 
   it('edit', async () => {
     const task = testData.tasks.editing;
     const { existingId: id } = testData.tasks;
-    let response = await makeRequest('get', `/tasks/${id}/edit`);
+    const labelId = testData.labels.existingId;
+    const path = `/tasks/${id}`;
+
+    let response = await makeRequest('get', `${path}/edit`);
     expect(response.statusCode).toBe(302);
 
     await signIn();
-    response = await makeAuthedRequest('get', `/tasks/${id}/edit`);
+    response = await makeAuthedRequest('get', `${path}/edit`);
     expect(response.statusCode).toBe(200);
 
-    response = await makeAuthedRequest('patch', `/tasks/${id}`, { ...task, name: '' });
+    response = await makeAuthedRequest('patch', path, { ...task, name: '' });
     expect(response.statusCode).toBe(422);
     expect(await findById(id)).toMatchObject(testData.tasks.existing);
 
-    response = await makeAuthedRequest('patch', `/tasks/${id}`, { ...task, statusId: '' });
+    response = await makeAuthedRequest('patch', path, { ...task, statusId: '' });
     expect(response.statusCode).toBe(422);
     expect(await findById(id)).toMatchObject(testData.tasks.existing);
 
-    response = await makeAuthedRequest('patch', `/tasks/${id}`, task);
+    response = await makeAuthedRequest('patch', path, task);
     expect(response.statusCode).toBe(302);
-    expect(await findById(id)).toMatchObject(task);
+    const editedTask = await findById(id);
+    expect(editedTask).toMatchObject(task);
+    expect(await editedTask.$relatedQuery('labels')).not.toBeDefined();
+
+    response = await makeAuthedRequest('patch', path, { ...task, labels: labelId });
+    const taskWithLabel = await findById(id);
+    const expectedLabel = await findLabel(labelId);
+    expect(await taskWithLabel.$relatedQuery('labels')).toMatchObject(expectedLabel);
   });
 
   it('delete', async () => {
