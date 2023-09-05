@@ -69,12 +69,37 @@ describe('test tasks CRUD', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  it('filter', async () => {
+    await signIn();
+    const response = await makeAuthedRequest().query({
+      status: testData.statuses.existingId,
+      executor: testData.users.existingId,
+      label: testData.labels.existingId,
+      isCreatorUser: 'on',
+    });
+    expect(response.body).toMatch(new RegExp(testData.tasks.existing.name));
+    expect(response.body).toMatch(new RegExp(testData.statuses.existing.name));
+    expect(response.body).toMatch(new RegExp(testData.users.existing.firstName));
+    expect(response.body).toMatch(new RegExp(testData.users.existing.lastName));
+  });
+
   it('new', async () => {
     let response = await makeRequest('get', 'newTask');
     expect(response.statusCode).toBe(302);
 
     await signIn();
     response = await makeAuthedRequest('get', 'newTask');
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('card', async () => {
+    const id = testData.tasks.existingId;
+    const path = `/tasks/${id}`;
+    let response = await makeRequest('get', path);
+    expect(response.statusCode).toBe(302);
+
+    await signIn();
+    response = await makeAuthedRequest('get', path);
     expect(response.statusCode).toBe(200);
   });
 
