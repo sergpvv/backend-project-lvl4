@@ -1,7 +1,8 @@
 import fastify from 'fastify';
 
 import init from '../server/plugin.js';
-import { getTestData, prepareData } from './helpers/index.js';
+import { getFullName } from '../server/helpers/index.js';
+import { getTestData, prepareData, getRegExp } from './helpers/index.js';
 
 describe('test tasks CRUD', () => {
   let app;
@@ -71,16 +72,28 @@ describe('test tasks CRUD', () => {
 
   it('filter', async () => {
     await signIn();
-    const response = await makeAuthedRequest().query({
+    let { body } = await makeAuthedRequest();
+    expect(body).toMatch(new RegExp(testData.tasks.existing.name));
+    expect(body).toMatch(getRegExp(testData.statuses.existing.name));
+    const existingFullName = getFullName(testData.users.existing);
+    expect(body).toMatch(getRegExp(existingFullName));
+    expect(body).toMatch(new RegExp(testData.tasks.unsuitable.name));
+    expect(body).toMatch(getRegExp(testData.statuses.unsuitable.name));
+    const unsuitableFullName = getFullName(testData.users.unsuitable);
+    expect(body).toMatch(getRegExp(unsuitableFullName));
+
+    ({ body } = await makeAuthedRequest().query({
       status: testData.statuses.existingId,
       executor: testData.users.existingId,
       label: testData.labels.existingId,
       isCreatorUser: 'on',
-    });
-    expect(response.body).toMatch(new RegExp(testData.tasks.existing.name));
-    expect(response.body).toMatch(new RegExp(testData.statuses.existing.name));
-    expect(response.body).toMatch(new RegExp(testData.users.existing.firstName));
-    expect(response.body).toMatch(new RegExp(testData.users.existing.lastName));
+    }));
+    expect(body).toMatch(new RegExp(testData.tasks.existing.name));
+    expect(body).toMatch(getRegExp(testData.statuses.existing.name));
+    expect(body).toMatch(getRegExp(existingFullName));
+    expect(body).not.toMatch(new RegExp(testData.tasks.unsuitable.name));
+    expect(body).not.toMatch(getRegExp(testData.statuses.unsuitable.name));
+    expect(body).not.toMatch(getRegExp(unsuitableFullName));
   });
 
   it('new', async () => {
@@ -101,6 +114,14 @@ describe('test tasks CRUD', () => {
     await signIn();
     response = await makeAuthedRequest('get', path);
     expect(response.statusCode).toBe(200);
+
+    const { body } = response;
+    expect(body).toMatch(new RegExp(testData.tasks.existing.description));
+    expect(body).toMatch(new RegExp(testData.tasks.existing.name));
+    expect(body).toMatch(new RegExp(testData.statuses.existing.name));
+    expect(body).toMatch(new RegExp(testData.labels.existing.name));
+    expect(body).toMatch(new RegExp(testData.users.existing.firstName));
+    expect(body).toMatch(new RegExp(testData.users.existing.lastName));
   });
 
   it('create', async () => {

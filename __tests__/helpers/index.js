@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 import _ from 'lodash';
 import encrypt from '../../server/lib/secure.js';
 
-const length = 2; // number of test entities
+const length = 4; // number of test entities
 
 export const getRandom = () => Math.floor(Math.random() * length);
 
@@ -35,10 +35,6 @@ const testStatuses = generateEntities(generateStatus);
 
 const testLabels = generateEntities(generateLabel);
 
-const existingId = getRandom();
-
-const getDeletable = (testEntities) => testEntities[(existingId + 1) % length];
-
 const isUnique = (entity, unique, testEntities) => _.filter(
   testEntities,
   ({ [unique]: value }) => entity[unique] === value,
@@ -55,24 +51,36 @@ const generateNewEntity = (generateEntity, unique, testEntities) => {
   return result;
 };
 
+const generateNewUser = () => generateNewEntity(generateUser, 'email', testUsers);
+
+const generateNewStatus = () => generateNewEntity(generateStatus, 'name', testStatuses);
+
+const generateNewLabel = () => generateNewEntity(generateLabel, 'name', testLabels);
+
 const testData = {
   users: {
-    new: generateNewEntity(generateUser, 'email', testUsers),
-    editing: generateUser(),
-    existing: testUsers[existingId],
-    deletable: getDeletable(testUsers),
+    new: generateNewUser(),
+    editing: generateNewUser(),
+    existing: testUsers[0],
+    deletable: testUsers[1],
+    unsuitable: testUsers[2],
+    taskEditing: testUsers[3],
   },
   statuses: {
-    new: generateNewEntity(generateStatus, 'name', testStatuses),
-    editing: generateStatus(),
-    existing: testStatuses[existingId],
-    deletable: getDeletable(testStatuses),
+    new: generateNewStatus(),
+    editing: generateNewStatus(),
+    existing: testStatuses[0],
+    deletable: testStatuses[1],
+    unsuitable: testStatuses[2],
+    taskEditing: testStatuses[3],
   },
   labels: {
-    new: generateNewEntity(generateLabel, 'name', testLabels),
-    editing: generateLabel(),
-    existing: testLabels[existingId],
-    deletable: getDeletable(testLabels),
+    new: generateNewLabel(),
+    editing: generateNewLabel(),
+    existing: testLabels[0],
+    deletable: testLabels[1],
+    unsuitable: testLabels[2],
+    taskEditing: testLabels[3],
   },
   tasks: {},
 };
@@ -87,8 +95,6 @@ export const userPropertySheetExceptPassword = _.chunk(_.reject(userPropertyName
 
 export const getTestData = () => testData;
 
-const getId = () => getRandom() + 1;
-
 export const prepareData = async (app) => {
   const insert = (table, data) => app.objection.knex(table).insert(data);
 
@@ -97,26 +103,44 @@ export const prepareData = async (app) => {
     passwordDigest: encrypt(password),
   })));
 
-  const { email } = testData.users.existing;
-  const user = await app.objection.models.user.query().findOne({ email });
-  testData.users.existingId = user.id;
+  const { id: userId } = await app.objection.models.user.query()
+    .findOne({ email: testData.users.existing.email });
+  testData.users.existingId = userId;
 
   await insert('statuses', testStatuses);
-  const status = await app.objection.models.taskStatus.query()
+  const { id: statusId } = await app.objection.models.taskStatus.query()
     .findOne({ name: testData.statuses.existing.name });
-  testData.statuses.existingId = status.id;
+  testData.statuses.existingId = statusId;
 
-  testData.tasks.new = generateTask(status.id, user.id, user.id);
-  testData.tasks.existing = generateTask(status.id, user.id, user.id);
-  testData.tasks.editing = generateTask(getId(), getId(), user.id);
-  await insert('tasks', testData.tasks.existing);
-  const task = await app.objection.models.task.query()
-    .findOne({ name: testData.tasks.existing.name });
-  testData.tasks.existingId = task.id;
+  testData.tasks.new = generateTask(statusId, userId, userId);
+  testData.tasks.existing = generateTask(statusId, userId, userId);
+
+  const existingTask = await app.objection.models.task.query()
+    .insertAndFetch(testData.tasks.existing);
+  testData.tasks.existingId = existingTask.id;
+
+  const { id: taskEditingUserId } = await app.objection.models.user.query()
+    .findOne({ email: testData.users.taskEditing.email });
+  const { id: taskEditingStatusId } = await app.objection.models.taskStatus.query()
+    .findOne({ name: testData.statuses.taskEditing.name });
+  testData.tasks.editing = generateTask(taskEditingStatusId, taskEditingUserId, userId);
 
   await insert('labels', testLabels);
-  const label = await app.objection.models.label.query()
+  const { id: existingLabelId } = await app.objection.models.label.query()
     .findOne({ name: testData.labels.existing.name });
-  testData.labels.existingId = label.id;
-  await task.$relatedQuery('labels').relate(label.id);
+  testData.labels.existingId = existingLabelId;
+  await existingTask.$relatedQuery('labels').relate(existingLabelId);
+
+  const { id: unsuitableStatusId } = await app.objection.models.taskStatus.query()
+    .findOne({ name: testData.statuses.unsuitable.name });
+  const { id } = await app.objection.models.user.query()
+    .findOne({ email: testData.users.unsuitable.email });
+  const unsuitableTask = await app.objection.models.task.query()
+    .insertAndFetch(generateTask(unsuitableStatusId, id, id));
+  testData.tasks.unsuitable = unsuitableTask;
+  const { id: unsuitableLabelId } = await app.objection.models.label.query()
+    .findOne({ name: testData.labels.unsuitable.name });
+  await unsuitableTask.$relatedQuery('labels').relate(unsuitableLabelId);
 };
+
+export const getRegExp = (str) => new RegExp(`<td>${str}`);
